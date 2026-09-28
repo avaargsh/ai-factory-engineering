@@ -1,0 +1,10 @@
+test_id,layer,test,metric,threshold,evidence
+FAC-PWR-001,facility,A/B power failover,recovery_time_s,TBD,power telemetry + event timeline
+FAC-THM-001,facility,CDU failover,thermal_headroom,TBD,flow/temp/pressure telemetry
+GPU-001,compute,sustained GPU burn,xid_ecc_errors,0,DCGM + BMC
+FAB-RDMA-001,fabric,RDMA scale test,bandwidth_and_tail,TBD,NIC/switch telemetry
+FAB-NCCL-001,fabric,NCCL collective,collective_bandwidth,TBD,NCCL output + fabric telemetry
+K8S-001,runtime,gang admission,startup_time_s,TBD,Kubernetes events
+TRN-001,workload,training sustained run,model_progress_and_mfu,TBD,training logs + traces
+INF-001,workload,inference SLO run,ttft_tpot_goodput,TBD,serving metrics + traces
+FLT-001,reliability,node/GPU failure,recovery_time_and_loss,TBD,incident timeline + workload metrics
