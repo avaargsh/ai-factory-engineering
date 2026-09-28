@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Factory Acceptance Test",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "aifactory.engineering/v1alpha1"
+    },
+    "kind": {
+      "const": "AcceptanceTest"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "layer"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layer": {
+          "enum": [
+            "facility",
+            "compute",
+            "fabric",
+            "storage",
+            "cluster",
+            "runtime",
+            "workload",
+            "reliability"
+          ]
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objective",
+        "metrics",
+        "evidence"
+      ],
+      "properties": {
+        "objective": {
+          "type": "string",
+          "minLength": 1
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workload": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "durationSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "metrics": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "op",
+              "threshold"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "op": {
+                "enum": [
+                  "lt",
+                  "lte",
+                  "gt",
+                  "gte",
+                  "eq"
+                ]
+              },
+              "threshold": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "aggregation": {
+                "enum": [
+                  "min",
+                  "max",
+                  "mean",
+                  "p50",
+                  "p95",
+                  "p99",
+                  "sum",
+                  "rate",
+                  "last"
+                ]
+              }
+            }
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source",
+              "required"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "retestOnChange": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
