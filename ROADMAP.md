@@ -17,16 +17,20 @@
 - [ ] 576-GPU casebook expansion
 
 ## v0.3 — Acceptance toolkit
-- [ ] machine-readable test specification
-- [ ] evidence bundle schema
+- [x] machine-readable AcceptanceTest specification
+- [x] EvidenceBundle schema
+- [x] schema validator
+- [x] fail-closed threshold/evidence evaluator
+- [x] markdown acceptance report
 - [ ] NCCL/RDMA collection scripts
 - [ ] DCGM / Kubernetes evidence collectors
 - [ ] workload benchmark adapters
-- [ ] acceptance report generator
+- [ ] multi-test acceptance run / report aggregation
 
 ## v0.4 — Economics
-- [ ] 8760/35040 capacity model
-- [ ] Productive GPU Hours model
-- [ ] Tokens/kWh and Tokens/GPU-hour model
+- [x] first-order MW -> Rack -> GPU -> Productive GPUh model
+- [x] optional Tokens/GPU-hour and Tokens/kWh projection
+- [ ] 8760 time-series capacity model
+- [ ] 35040 (15-minute) energy/price model
 - [ ] brownfield retrofit model
 - [ ] Revenue/MW model
