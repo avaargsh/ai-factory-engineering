@@ -9,6 +9,8 @@ from .acceptance import (
     load_and_validate_test_spec,
 )
 from .capacity import CapacityInputs, calculate_capacity
+from .evaluator import evaluate_acceptance
+from .report import render_acceptance_markdown
 
 
 def main() -> None:
@@ -23,6 +25,10 @@ def main() -> None:
 
     validate_evidence = subparsers.add_parser("validate-evidence")
     validate_evidence.add_argument("path")
+
+    evaluate = subparsers.add_parser("evaluate")
+    evaluate.add_argument("test")
+    evaluate.add_argument("evidence")
 
     capacity = subparsers.add_parser("capacity")
     capacity.add_argument("--contract-mw", type=float, required=True)
@@ -47,6 +53,13 @@ def main() -> None:
         doc = load_and_validate_evidence_bundle(args.path)
         print(f"valid EvidenceBundle: {doc['metadata']['bundleId']}")
         return
+
+    if args.command == "evaluate":
+        test_spec = load_and_validate_test_spec(args.test)
+        evidence_bundle = load_and_validate_evidence_bundle(args.evidence)
+        result = evaluate_acceptance(test_spec, evidence_bundle)
+        print(render_acceptance_markdown(result), end="")
+        raise SystemExit(0 if result.passed else 2)
 
     result = calculate_capacity(
         CapacityInputs(
