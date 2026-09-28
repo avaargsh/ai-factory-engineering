@@ -1,0 +1,41 @@
+{
+  "apiVersion": "aifactory.engineering/v1alpha1",
+  "kind": "EvidenceBundle",
+  "metadata": {
+    "bundleId": "bundle-fab-nccl-001-demo",
+    "startedAt": "2026-09-28T00:00:00Z",
+    "endedAt": "2026-09-28T00:30:00Z"
+  },
+  "testRef": "FAB-NCCL-001",
+  "environment": {
+    "topologyRef": "artifact://topology/fabric-a.json",
+    "versionMatrix": {
+      "driver": "example",
+      "cuda": "example",
+      "nccl": "example",
+      "nic_firmware": "example"
+    },
+    "configRefs": [
+      "artifact://config/roce-qos.txt"
+    ]
+  },
+  "measurements": {
+    "bus_bandwidth_gbps": 320,
+    "collective_error_count": 0
+  },
+  "artifacts": [
+    {
+      "type": "nccl-tests-output",
+      "uri": "artifact://runs/fab-nccl-001/nccl.txt",
+      "checksum": "sha256:demo"
+    },
+    {
+      "type": "fabric-telemetry",
+      "uri": "artifact://runs/fab-nccl-001/telemetry.json"
+    }
+  ],
+  "result": {
+    "passed": true,
+    "notes": "Synthetic example only."
+  }
+}
