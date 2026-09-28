@@ -2,23 +2,22 @@ from pathlib import Path
 
 import pytest
 
-from ai_factory_engineering.economics import (
-    EconomicsInputs,
+from ai_factory_engineering.timeseries import (
+    TimeSeriesInputs,
     TimeSlice,
     evaluate_time_series,
 )
-from ai_factory_engineering.economics_csv import (
+from ai_factory_engineering.timeseries_csv import (
     load_time_slices_csv,
 )
 
 
-def test_time_series_economics() -> None:
+def test_time_series_energy_to_token_model() -> None:
     result = evaluate_time_series(
-        EconomicsInputs(
+        TimeSeriesInputs(
             it_capacity_mw=8.0,
             productive_gpu_capacity=4000,
             tokens_per_productive_gpu_hour=1_000_000,
-            revenue_per_million_tokens=1.5,
         ),
         [
             TimeSlice(
@@ -42,11 +41,11 @@ def test_time_series_economics() -> None:
     assert result.total_hours == pytest.approx(2.0)
     assert result.it_mwh == pytest.approx(12.0)
     assert result.facility_mwh == pytest.approx(14.4)
-    assert result.electricity_cost == pytest.approx(1200.0)
+    assert result.energy_cost == pytest.approx(1200.0)
     assert result.productive_gpu_hours == pytest.approx(4800)
     assert result.tokens == pytest.approx(4.8e9)
-    assert result.revenue == pytest.approx(7200.0)
-    assert result.margin_after_electricity == pytest.approx(6000.0)
+    assert result.tokens_per_kwh is not None
+    assert result.energy_cost_per_million_tokens is not None
 
 
 def test_15_minute_csv_loads() -> None:
@@ -56,7 +55,10 @@ def test_15_minute_csv_loads() -> None:
     )
 
     assert len(slices) == 8
-    assert sum(item.duration_hours for item in slices) == 2.0
+    assert sum(
+        item.duration_hours
+        for item in slices
+    ) == 2.0
 
 
 def test_invalid_utilization_is_rejected() -> None:
