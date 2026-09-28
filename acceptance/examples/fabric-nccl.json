@@ -1,0 +1,57 @@
+{
+  "apiVersion": "aifactory.engineering/v1alpha1",
+  "kind": "AcceptanceTest",
+  "metadata": {
+    "id": "FAB-NCCL-001",
+    "name": "Multi-node NCCL sustained collective",
+    "layer": "fabric"
+  },
+  "spec": {
+    "objective": "Verify sustained collective performance and tail stability across the target GPU fabric.",
+    "preconditions": [
+      "GPU/NIC firmware baseline captured",
+      "RDMA connectivity validated",
+      "target topology snapshot captured"
+    ],
+    "workload": {
+      "tool": "nccl-tests",
+      "collective": "all_reduce",
+      "scope": "multi-node"
+    },
+    "durationSeconds": 1800,
+    "metrics": [
+      {
+        "name": "bus_bandwidth_gbps",
+        "op": "gte",
+        "threshold": 300,
+        "unit": "Gbps",
+        "aggregation": "p50"
+      },
+      {
+        "name": "collective_error_count",
+        "op": "eq",
+        "threshold": 0,
+        "unit": "count",
+        "aggregation": "sum"
+      }
+    ],
+    "evidence": [
+      {
+        "source": "nccl-tests-output",
+        "required": true,
+        "description": "Raw collective benchmark output"
+      },
+      {
+        "source": "fabric-telemetry",
+        "required": true,
+        "description": "NIC/switch/RDMA counters over the same test window"
+      }
+    ],
+    "retestOnChange": [
+      "NIC firmware",
+      "switch firmware",
+      "NCCL version",
+      "fabric QoS/PFC/ECN configuration"
+    ]
+  }
+}
