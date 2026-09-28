@@ -22,15 +22,20 @@
 - [x] schema validator
 - [x] fail-closed threshold/evidence evaluator
 - [x] markdown acceptance report
+- [x] multi-test Acceptance Run
+- [x] fail-closed run aggregation
+- [x] run-level markdown report
 - [ ] NCCL/RDMA collection scripts
 - [ ] DCGM / Kubernetes evidence collectors
 - [ ] workload benchmark adapters
-- [ ] multi-test acceptance run / report aggregation
 
-## v0.4 — Economics
+## v0.4 — Time-series capacity and energy
 - [x] first-order MW -> Rack -> GPU -> Productive GPUh model
 - [x] optional Tokens/GPU-hour and Tokens/kWh projection
-- [ ] 8760 time-series capacity model
-- [ ] 35040 (15-minute) energy/price model
+- [x] generic time-slice engine
+- [x] 8760 hourly model support
+- [x] 35040 15-minute model support
+- [x] variable electricity price / load / PUE inputs
+- [x] energy cost per 1M Tokens
 - [ ] brownfield retrofit model
-- [ ] Revenue/MW model
+- [ ] broader unit-economics cost layers
