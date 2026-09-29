@@ -1,0 +1,67 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Callable, Mapping, Sequence
+
+from .collectors.dcgm import parse_dcgm_csv
+from .collectors.nccl import parse_nccl_tests, summarize_nccl
+from .collectors.nvlink import parse_nvlink_status
+from .collectors.rdma import normalize_rdma, parse_rdma_counters
+from .evidence import build_evidence_bundle
+from .runner import LocalCommandRunner, Runner, persist_raw_artifact
+
+
+Parser = Callable[[str], Mapping[str, float]]
+
+
+def _parse_nccl(text: str) -> Mapping[str, float]:
+    return summarize_nccl(parse_nccl_tests(text))
+
+
+PARSERS: dict[str, Parser] = {
+    "dcgm": parse_dcgm_csv,
+    "nvlink": parse_nvlink_status,
+    "rdma": lambda text: normalize_rdma(parse_rdma_counters(text)),
+    "nccl": _parse_nccl,
+}
+
+
+def execute_collector_to_evidence(
+    *,
+    collector: str,
+    command: Sequence[str],
+    output_dir: str | Path,
+    bundle_id: str,
+    test_ref: str,
+    topology_ref: str,
+    collector_version: str = "0.1",
+    asset_refs: list[str] | None = None,
+    runner: Runner | None = None,
+    timeout_seconds: float = 60.0,
+) -> dict:
+    """Execute one collector and preserve raw bytes before parsing them."""
+    try:
+        parser = PARSERS[collector]
+    except KeyError as exc:
+        raise ValueError(f"unsupported collector: {collector}") from exc
+
+    active_runner = runner or LocalCommandRunner()
+    result = active_runner.run(command, timeout_seconds=timeout_seconds)
+
+    artifact = persist_raw_artifact(
+        output_dir=output_dir,
+        name=f"{bundle_id}-{collector}.raw",
+        content=result.stdout,
+    )
+    measurements = dict(parser(result.stdout))
+
+    return build_evidence_bundle(
+        bundle_id=bundle_id,
+        test_ref=test_ref,
+        topology_ref=topology_ref,
+        collector=collector,
+        collector_version=collector_version,
+        measurements=measurements,
+        artifacts=[artifact],
+        asset_refs=asset_refs,
+    )
