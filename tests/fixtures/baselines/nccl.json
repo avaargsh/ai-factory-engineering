@@ -1,0 +1,1 @@
+{"id":"DEMO-NCCL","metric":"nccl_busbw_gbps","operator":"gte","value":100,"unit":"GB/s","scope":"demo reference run","source":"synthetic CI fixture"}
