@@ -1,65 +1,210 @@
 # AI Factory Engineering
 
-A docs-first engineering knowledge base and reference architecture for turning **MW of power into sustainable, measurable AI output**.
+**Cross-layer commissioning and acceptance toolkit for AI factories — from facility power and GPU fabric to Kubernetes scheduling, LLM inference SLOs, and failure recovery.**
 
-The organizing question is:
+This repository asks one engineering question:
 
-> How does Energy / MW flow through Facility, GPU, Fabric, Runtime and Model layers to become Productive GPU Hours, Model Progress, Useful Tokens, SLO and economics?
+> Can the designed infrastructure continuously turn power, cooling, GPUs and network capacity into **measurable, SLO-compliant AI output**?
+
+It combines design intent, collectors, evidence, acceptance rules and recovery experiments instead of treating Facility, GPU, Fabric, Kubernetes and inference as unrelated silos.
 
 ## Engineering spine
 
 ```text
-Energy / MW
-  -> Facility
-  -> Rack / Pod
-  -> GPU
-  -> Fabric / Storage
-  -> Cluster
-  -> Runtime
-  -> Model
-  -> Token / Model Progress
-  -> SLO
-  -> Economics
+MW / Facility
+    ↓
+Rack / Power / Cooling
+    ↓
+GPU / HBM / NVLink
+    ↓
+RoCE / IB / RDMA / NCCL
+    ↓
+Kubernetes GPU Scheduling
+    ↓
+vLLM Inference Runtime
+    ↓
+TTFT / TPOT / Goodput
+    ↓
+Failure Recovery
+    ↓
+Acceptance Evidence
 ```
 
-Lifecycle:
+The acceptance loop is:
 
 ```text
-Planning -> Design -> Build -> Commissioning -> Operations / SRE
-         -> Upgrade / Expansion -> Continuous Re-validation
+DesignIntent
+   ↓
+CommissioningPlan
+   ↓
+Collector → Raw Artifact → SHA-256
+   ↓
+EvidenceBundle
+   ↓
+MetricRule / SLO
+   ↓
+TestOutcome
+   ↓
+Acceptance / Re-validation
 ```
 
-## Five-layer model
+## What is implemented
 
-1. **Facility** — power, cooling, rack, structure and failure domains
-2. **Compute** — GPU, HBM, PCIe, NUMA, NVLink / NVSwitch
-3. **Fabric** — InfiniBand / RoCE, RDMA, NCCL and storage data paths
-4. **Runtime** — Kubernetes, scheduling, training / inference runtime and KV
-5. **Workload** — training, inference, MoE, long context, multimodal and Agent workloads
+| Layer | Executable evidence / acceptance |
+| --- | --- |
+| Facility / capacity | MW → IT capacity → GPU capacity → productive GPU-hours / tokens |
+| GPU | DCGM evidence and H100 SXM acceptance profile |
+| Fabric | NVLink, RDMA counters, NCCL scale-out evidence |
+| Kubernetes | GPU scheduling / gang-admission acceptance |
+| Inference | vLLM Prometheus telemetry, TTFT / TPOT percentile SLO evaluation |
+| Reliability | Pod-loss injection, replacement readiness, stable SLO recovery, recovery-time / goodput-loss evidence |
+| Reporting | JSON evidence plus Markdown acceptance reports |
 
-## Core engineering models
+## 576-GPU commissioning Golden Run
 
-- **Capacity Waterfall** — Installed -> Design -> Usable -> Allocatable -> Productive
-- **Multi-Roof Capacity** — capacity is bounded by the tightest Power / Cooling / Fabric / Storage / Runtime / Workload roof
-- **Fault-to-Token / Fault-to-Progress** — map infrastructure faults to lost productive output
-- **Engineering Digital Thread** — requirement -> design -> config -> test -> telemetry -> incident -> change -> re-validation
-- **Cross-Layer Acceptance** — prove real workloads can sustain contractual performance inside the designed power/thermal envelope
+The repository includes a deterministic 576-GPU reference scenario:
 
-## Repository scope
+- `acceptance/examples/576-gpu-design-intent.json`
+- `acceptance/examples/576-gpu-commissioning-plan.json`
+- `acceptance/examples/576-gpu-golden-outcomes.json`
+
+These files are **fixtures for exercising the acceptance contract**. They are not claimed as measurements from a production 576-GPU cluster.
+
+The important boundary is:
 
 ```text
-docs/architecture/      system architecture and cross-layer models
-docs/facility/          power, cooling, rack and retrofit
-docs/compute/           GPU, topology and accelerator stack
-docs/fabric/            RoCE / IB / RDMA / NCCL
-docs/runtime/           Kubernetes, training and inference
-docs/reliability/       SRE, fault models and observability
-docs/acceptance/        commissioning and workload acceptance
-docs/economics/         capacity and unit economics
-casebook/               reference designs and field cases
-checklists/              design / go-live / expansion checklists
+vendor theoretical peak ≠ site acceptance threshold
+fixture evidence        ≠ measured production evidence
+Pod Ready               ≠ inference SLO recovered
+raw token throughput    ≠ SLO-compliant goodput
 ```
 
-## Status
+## Quick start
 
-Private incubation repository. The current phase converts long-form research into canonical engineering notes, checklists, test matrices and reference architectures before public release.
+Requires Python 3.11+.
+
+```bash
+python -m pip install -e ".[dev]"
+pytest -q
+```
+
+The package installs the `ai-factory` CLI.
+
+### Capacity model
+
+```bash
+ai-factory capacity \
+  --contract-mw 8 \
+  --pue 1.2 \
+  --rack-kw 100 \
+  --gpus-per-rack 8
+```
+
+### Evaluate acceptance evidence
+
+```bash
+ai-factory evaluate \
+  acceptance/examples/fabric-nccl.json \
+  acceptance/examples/fabric-nccl-evidence.json
+```
+
+### Live Kubernetes + vLLM recovery — safe default
+
+The recovery command is **non-destructive by default** and sends a Kubernetes server-side dry-run request:
+
+```bash
+ai-factory recovery run \
+  --namespace inference \
+  --workload vllm \
+  --pod vllm-0 \
+  --metrics-url http://vllm:8000/metrics \
+  --slo-profile acceptance/examples/inference-interactive-slo.json \
+  --output-dir artifacts/recovery
+```
+
+A real Pod deletion requires explicit opt-in:
+
+```bash
+ai-factory recovery run ... --execute
+```
+
+The command persists:
+
+```text
+artifacts/recovery/
+├── recovery-result.json
+└── recovery-report.md
+```
+
+A destructive run is intended to measure two different clocks:
+
+```text
+fault
+  ↓
+replacement Pod Ready       ← Kubernetes recovery
+  ↓
+TTFT / TPOT healthy
+  ↓
+N consecutive healthy samples
+  ↓
+Service SLO Recovered       ← workload recovery
+```
+
+## Architecture
+
+The project intentionally keeps responsibilities narrow:
+
+- **Collectors** acquire raw DCGM / NVLink / RDMA / NCCL / Prometheus evidence.
+- **Evidence adapters** normalize measurements without embedding acceptance policy.
+- **Profiles / DesignIntent** define site- or workload-specific expectations.
+- **Evaluators** produce deterministic PASS / FAIL / ERROR outcomes.
+- **Recovery runner** composes Kubernetes fault injection and vLLM SLO observation; it is not a chaos platform or orchestrator.
+- **Reports** make the result replayable and reviewable.
+
+## Safety and evidence rules
+
+The repository follows several fail-closed rules:
+
+1. Missing or `TBD` acceptance baselines do not silently pass.
+2. Numeric thresholds require explicit comparison semantics and scope.
+3. Different Prometheus histogram labelsets must not be silently treated as one workload.
+4. Kubernetes Pod readiness is not sufficient evidence of inference recovery.
+5. Destructive fault injection is opt-in; dry-run is the default.
+6. Recovery thresholds come from workload/site profiles, not universal constants.
+7. Golden fixtures are labeled fixtures rather than represented as production measurements.
+
+## Repository map
+
+```text
+acceptance/             baselines, profiles, examples and test matrix
+src/ai_factory_engineering/
+                        collectors, evidence, evaluators, recovery and CLI
+docs/                   architecture and engineering notes
+casebook/               reference designs / cases
+checklists/             design, go-live and expansion checks
+tests/                  deterministic contract and regression tests
+```
+
+Useful implementation notes:
+
+- `docs/inference-recovery-golden-run.md`
+- `docs/live-inference-recovery-experiment.md`
+- `docs/recovery-cli.md`
+- `docs/slo-recovery-watcher.md`
+- `docs/live-providers.md`
+
+## Scope / non-goals
+
+This is an engineering acceptance framework, not a replacement for Kubernetes, Prometheus, DCGM, NCCL, vLLM, a scheduler, a benchmark suite, or a chaos platform.
+
+The project is strongest when it answers cross-layer questions such as:
+
+- Did the GPU fabric deliver the expected workload envelope?
+- Did Kubernetes place the workload correctly?
+- Did inference stay inside TTFT / TPOT SLOs?
+- After a Pod loss, when was compute ready versus when was the service actually healthy?
+- How much productive GPU time or goodput was lost?
+
+## Project direction
+
+Current work is intentionally focused on **evidence-backed GPU / inference commissioning** rather than adding more architecture layers. The next meaningful step is running the existing live recovery path against controlled Kubernetes + vLLM environments and replacing fixtures with clearly provenance-tagged measured evidence.
