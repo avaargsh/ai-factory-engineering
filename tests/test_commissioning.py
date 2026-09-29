@@ -1,4 +1,4 @@
-from ai_factory_engineering.commissioning import GateDecision, GateSpec, GateStatus, TestOutcome, evaluate_gate
+from ai_factory_engineering.commissioning import CommissioningPlanError, GateDecision, GateSpec, GateStatus, TestOutcome, evaluate_gate, validate_plan
 
 
 def facility_gate():
@@ -29,3 +29,39 @@ def test_failed_dependency_blocks_gate():
     spec = GateSpec("gpu", "compute", ("dcgm",), depends_on=("facility",))
     deps = {"facility": GateDecision("facility", GateStatus.FAIL)}
     assert evaluate_gate(spec, [TestOutcome("dcgm", GateStatus.PASS)], deps).status == GateStatus.BLOCKED
+
+
+
+def test_validate_plan_returns_dependency_first_order():
+    gates = (
+        GateSpec("runtime", "runtime", ("serving",), depends_on=("fabric",)),
+        GateSpec("facility", "facility", ("power",)),
+        GateSpec("fabric", "fabric", ("nccl",), depends_on=("facility",)),
+    )
+    assert validate_plan(gates) == ("facility", "fabric", "runtime")
+
+
+def test_validate_plan_rejects_duplicate_gate_ids():
+    gates = (
+        GateSpec("facility", "facility", ("power",)),
+        GateSpec("facility", "compute", ("dcgm",)),
+    )
+    import pytest
+    with pytest.raises(CommissioningPlanError, match="duplicate gate id"):
+        validate_plan(gates)
+
+
+def test_validate_plan_rejects_unknown_dependency():
+    import pytest
+    with pytest.raises(CommissioningPlanError, match="unknown dependency"):
+        validate_plan((GateSpec("fabric", "fabric", ("nccl",), depends_on=("facility",)),))
+
+
+def test_validate_plan_rejects_dependency_cycle():
+    import pytest
+    gates = (
+        GateSpec("fabric", "fabric", ("nccl",), depends_on=("runtime",)),
+        GateSpec("runtime", "runtime", ("serving",), depends_on=("fabric",)),
+    )
+    with pytest.raises(CommissioningPlanError, match="dependency cycle"):
+        validate_plan(gates)
