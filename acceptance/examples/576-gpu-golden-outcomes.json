@@ -1,0 +1,15 @@
+{
+  "facility": [
+    {"test_id": "power-envelope", "status": "PASS", "evidence_complete": true},
+    {"test_id": "thermal-envelope", "status": "PASS", "evidence_complete": true},
+    {"test_id": "failover", "status": "PASS", "evidence_complete": true}
+  ],
+  "gpu": [
+    {"test_id": "dcgm-health", "status": "PASS", "evidence_complete": true},
+    {"test_id": "nvlink-bandwidth", "status": "PASS", "evidence_complete": true}
+  ],
+  "fabric": [
+    {"test_id": "rdma-health", "status": "PASS", "evidence_complete": true},
+    {"test_id": "nccl-collective", "status": "PASS", "evidence_complete": true}
+  ]
+}
