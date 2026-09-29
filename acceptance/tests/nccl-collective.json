@@ -1,0 +1,7 @@
+{
+  "apiVersion":"aifactory.engineering/v1alpha1","kind":"AcceptanceTest",
+  "metadata":{"id":"nccl-collective","name":"NCCL collective performance","layer":"fabric"},
+  "spec":{"objective":"Evaluate NCCL collective bandwidth against an explicitly bound topology/reference-run baseline.","metrics":[
+    {"name":"nccl_busbw_gbps","op":"gte","threshold":0,"unit":"GB/s","aggregation":"last"}
+  ],"evidence":[{"source":"raw-collector-output","required":true,"description":"SHA-256-addressed raw nccl-tests output."}]}
+}
