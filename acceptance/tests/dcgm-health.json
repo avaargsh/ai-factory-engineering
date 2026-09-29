@@ -1,0 +1,11 @@
+{
+  "apiVersion": "aifactory.engineering/v1alpha1",
+  "kind": "AcceptanceTest",
+  "metadata": {"id": "dcgm-health", "name": "DCGM GPU health", "layer": "compute"},
+  "spec": {
+    "objective": "Fail commissioning when the normalized DCGM evidence reports any uncorrected ECC error.",
+    "metrics": [{"name": "gpu_ecc_uncorrected_total", "op": "eq", "threshold": 0, "unit": "count", "aggregation": "sum"}],
+    "evidence": [{"source": "raw-collector-output", "required": true, "description": "SHA-256-addressed raw collector stdout."}],
+    "retestOnChange": ["GPU replacement", "driver change", "firmware change"]
+  }
+}
