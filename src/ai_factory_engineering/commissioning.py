@@ -65,3 +65,47 @@ def evaluate_gate(spec: GateSpec, outcomes: Iterable[TestOutcome], dependencies:
         return GateDecision(spec.id, GateStatus.WARN, tuple(o.reason or f"warning: {o.test_id}" for o in warnings))
 
     return GateDecision(spec.id, GateStatus.PASS)
+
+
+
+class CommissioningPlanError(ValueError):
+    """The commissioning gate graph is structurally invalid."""
+
+
+def validate_plan(gates: Iterable[GateSpec]) -> tuple[str, ...]:
+    """Validate and return a deterministic dependency-first gate order."""
+    gate_list = tuple(gates)
+    by_id: dict[str, GateSpec] = {}
+    for gate in gate_list:
+        if gate.id in by_id:
+            raise CommissioningPlanError(f"duplicate gate id: {gate.id}")
+        by_id[gate.id] = gate
+
+    for gate in gate_list:
+        missing = [dep for dep in gate.depends_on if dep not in by_id]
+        if missing:
+            raise CommissioningPlanError(
+                f"gate {gate.id} has unknown dependency: {missing[0]}"
+            )
+        if gate.id in gate.depends_on:
+            raise CommissioningPlanError(f"gate {gate.id} depends on itself")
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+    order: list[str] = []
+
+    def visit(gate_id: str) -> None:
+        if gate_id in visited:
+            return
+        if gate_id in visiting:
+            raise CommissioningPlanError(f"dependency cycle detected at gate: {gate_id}")
+        visiting.add(gate_id)
+        for dependency in by_id[gate_id].depends_on:
+            visit(dependency)
+        visiting.remove(gate_id)
+        visited.add(gate_id)
+        order.append(gate_id)
+
+    for gate in gate_list:
+        visit(gate.id)
+    return tuple(order)
