@@ -1,0 +1,3 @@
+gpu_id,gpu_temp,power_w,sm_clock_mhz,ecc_uncorrected
+0,61,650,1830,0
+1,63,655,1815,0

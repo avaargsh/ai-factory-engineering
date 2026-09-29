@@ -1,0 +1,14 @@
+{
+  "id": "thermal-envelope",
+  "layer": "facility",
+  "intent": "Prove cooling can sustain design workload without thermal throttling.",
+  "required_evidence": [
+    "gpu_temperature",
+    "hbm_temperature",
+    "coolant_inlet",
+    "coolant_outlet",
+    "flow",
+    "gpu_clock",
+    "workload_goodput"
+  ]
+}

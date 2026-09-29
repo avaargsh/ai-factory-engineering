@@ -1,0 +1,16 @@
+{
+  "id": "power-envelope",
+  "layer": "facility",
+  "intent": "Prove sustained rack power remains inside the design envelope without workload degradation.",
+  "required_evidence": [
+    "rack_power",
+    "gpu_power",
+    "gpu_clock",
+    "workload_goodput"
+  ],
+  "acceptance": {
+    "rack_power": "<= design_limit",
+    "power_throttle": false,
+    "goodput_variance_pct": "<= 5"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "failover",
+  "layer": "facility",
+  "intent": "Prove a designed facility failover stays within the declared workload degradation and recovery envelope.",
+  "required_evidence": [
+    "fault_event",
+    "rack_power",
+    "gpu_power",
+    "workload_goodput",
+    "recovery_time"
+  ]
+}

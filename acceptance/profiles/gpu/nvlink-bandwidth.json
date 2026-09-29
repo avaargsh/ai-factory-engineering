@@ -1,0 +1,13 @@
+{
+  "id": "nvlink-bandwidth",
+  "layer": "compute",
+  "intent": "Prove intra-node GPU fabric meets the declared topology bandwidth envelope.",
+  "required_evidence": [
+    "gpu_topology",
+    "nvlink_counters",
+    "benchmark_output"
+  ],
+  "acceptance": {
+    "principle": "compare observed bandwidth against platform-specific design baseline"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CommissioningGate",
+  "type": "object",
+  "required": [
+    "id",
+    "layer",
+    "tests"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "layer": {
+      "enum": [
+        "facility",
+        "compute",
+        "fabric",
+        "storage",
+        "placement",
+        "runtime",
+        "workload",
+        "slo"
+      ]
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "acceptance_policy": {
+      "type": "object",
+      "properties": {
+        "fail_closed": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -13,6 +13,11 @@ from .acceptance_run import (
     load_acceptance_run_manifest,
 )
 from .capacity import CapacityInputs, calculate_capacity
+from .collectors.dcgm import parse_dcgm_csv
+from .collectors.nccl import parse_nccl_tests, summarize_nccl
+from .collectors.nvlink import parse_nvlink_status
+from .collectors.rdma import normalize_rdma, parse_rdma_counters
+from .evidence import build_evidence_bundle
 from .evaluator import evaluate_acceptance
 from .report import render_acceptance_markdown
 from .run_report import render_acceptance_run_markdown
@@ -39,6 +44,15 @@ def main() -> None:
 
     evaluate_run = subparsers.add_parser("evaluate-run")
     evaluate_run.add_argument("manifest")
+
+    collect = subparsers.add_parser("collect")
+    collect.add_argument("collector", choices=["dcgm", "nvlink", "rdma", "nccl"])
+    collect.add_argument("input")
+    collect.add_argument("--bundle-id", required=True)
+    collect.add_argument("--test-ref", required=True)
+    collect.add_argument("--topology-ref", required=True)
+    collect.add_argument("--collector-version", default="0.1")
+    collect.add_argument("--asset-ref", action="append", default=[])
 
     capacity = subparsers.add_parser("capacity")
     capacity.add_argument("--contract-mw", type=float, required=True)
@@ -98,6 +112,29 @@ def main() -> None:
             end="",
         )
         raise SystemExit(0 if result.passed else 2)
+
+    if args.command == "collect":
+        from pathlib import Path
+        text = Path(args.input).read_text(encoding="utf-8")
+        if args.collector == "dcgm":
+            measurements = parse_dcgm_csv(text)
+        elif args.collector == "nvlink":
+            measurements = parse_nvlink_status(text)
+        elif args.collector == "rdma":
+            measurements = normalize_rdma(parse_rdma_counters(text))
+        else:
+            measurements = summarize_nccl(parse_nccl_tests(text))
+        bundle = build_evidence_bundle(
+            bundle_id=args.bundle_id,
+            test_ref=args.test_ref,
+            topology_ref=args.topology_ref,
+            collector=args.collector,
+            collector_version=args.collector_version,
+            measurements=measurements,
+            asset_refs=args.asset_ref,
+        )
+        print(json.dumps(bundle, indent=2))
+        return
 
     if args.command == "timeseries":
         result = evaluate_time_series(

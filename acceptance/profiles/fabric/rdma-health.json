@@ -1,0 +1,15 @@
+{
+  "id": "rdma-health",
+  "layer": "fabric",
+  "intent": "Prove lossless transport and RDMA path health before collective benchmarks.",
+  "required_evidence": [
+    "nic_inventory",
+    "firmware_version",
+    "rdma_counters",
+    "ecn_counters",
+    "pfc_counters"
+  ],
+  "acceptance": {
+    "principle": "thresholds are supplied by the DesignIntent/reference profile, not hard-coded in the collector"
+  }
+}
