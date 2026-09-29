@@ -2,7 +2,7 @@ import hashlib
 import sys
 from pathlib import Path
 import pytest
-from ai_factory_engineering.runner import CollectorExecutionError, LocalCommandRunner, persist_raw_artifact
+from ai_factory_engineering.runner import CollectorExecutionError, LocalCommandRunner, Runner, persist_raw_artifact
 
 
 def test_local_runner_captures_stdout():
@@ -21,3 +21,9 @@ def test_raw_artifact_has_replayable_sha256(tmp_path: Path):
     expected=hashlib.sha256(b"port_xmit_discards: 0\n").hexdigest()
     assert artifact["checksum"] == f"sha256:{expected}"
     assert Path(artifact["uri"]).read_text() == "port_xmit_discards: 0\n"
+
+
+def test_local_runner_satisfies_runner_protocol_shape():
+    runner: Runner = LocalCommandRunner()
+    result = runner.run([sys.executable, "-c", "print('protocol')"])
+    assert result.stdout.strip() == "protocol"
