@@ -48,10 +48,10 @@
 - [x] fail-closed missing evidence semantics
 - [x] Facility Gate Golden Path profiles
 - [x] negative regression tests for threshold miss, collector error, missing evidence and dependency failure
-- [ ] CommissioningPlan execution DAG
-- [ ] DesignIntent schema
+- [x] CommissioningPlan execution DAG
+- [x] DesignIntent schema
 - [ ] evidence provenance and replay metadata
-- [ ] Gate-level report aggregation
+- [x] Gate-level report aggregation
 
 ## v0.6 — GPU + Fabric Commissioning
 - [ ] DCGM / PCIe / NVLink evidence collectors
