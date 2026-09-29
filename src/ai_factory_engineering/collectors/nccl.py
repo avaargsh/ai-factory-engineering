@@ -10,6 +10,7 @@ class NcclSample:
     time_us: float
     algbw_gbps: float
     busbw_gbps: float
+    wrong: int = 0
 
 
 # Normalized nccl-tests fixture columns:
@@ -32,6 +33,7 @@ def parse_nccl_tests(text: str) -> tuple[NcclSample, ...]:
                     time_us=float(match.group("time")),
                     algbw_gbps=float(match.group("algbw")),
                     busbw_gbps=float(match.group("busbw")),
+                    wrong=int(float(line.split()[8])) if len(line.split()) > 8 else 0,
                 )
             )
     return tuple(samples)
@@ -45,4 +47,5 @@ def summarize_nccl(samples: tuple[NcclSample, ...]) -> dict[str, float]:
         "nccl_largest_message_bytes": float(largest.size_bytes),
         "nccl_algbw_gbps": largest.algbw_gbps,
         "nccl_busbw_gbps": largest.busbw_gbps,
+        "nccl_wrong_total": float(sum(sample.wrong for sample in samples)),
     }

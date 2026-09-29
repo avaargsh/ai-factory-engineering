@@ -1,9 +1,42 @@
 {
   "runId": "demo-fabric-001",
   "topologyRef": "golden-factory-576",
-  "gates": [{"id":"fabric-gate","layer":"fabric","tests":["rdma-health","nccl-collective"]}],
+  "gates": [
+    {
+      "id": "fabric-gate",
+      "layer": "fabric",
+      "tests": [
+        "rdma-health",
+        "nccl-collective"
+      ]
+    }
+  ],
   "tests": [
-    {"collector":"rdma","command":["rdma-stat"],"test":"../tests/rdma-health.json","baselines":["../../tests/fixtures/baselines/rdma-tx.json","../../tests/fixtures/baselines/rdma-rx.json"],"gateId":"fabric-gate","bundleId":"rdma-demo"},
-    {"collector":"nccl","command":["nccl-tests"],"test":"../tests/nccl-collective.json","baselines":["../../tests/fixtures/baselines/nccl.json"],"gateId":"fabric-gate","bundleId":"nccl-demo"}
+    {
+      "collector": "rdma",
+      "command": [
+        "rdma-stat"
+      ],
+      "test": "../tests/rdma-health.json",
+      "baselines": [
+        "../../tests/fixtures/baselines/rdma-tx.json",
+        "../../tests/fixtures/baselines/rdma-rx.json"
+      ],
+      "gateId": "fabric-gate",
+      "bundleId": "rdma-demo"
+    },
+    {
+      "collector": "nccl",
+      "command": [
+        "nccl-tests"
+      ],
+      "test": "../tests/nccl-collective.json",
+      "baselines": [
+        "../../tests/fixtures/baselines/nccl.json",
+        "../../tests/fixtures/baselines/nccl-correctness.json"
+      ],
+      "gateId": "fabric-gate",
+      "bundleId": "nccl-demo"
+    }
   ]
 }
