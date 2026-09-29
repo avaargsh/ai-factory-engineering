@@ -23,6 +23,7 @@ from .report import render_acceptance_markdown
 from .run_report import render_acceptance_run_markdown
 from .timeseries import TimeSeriesInputs, evaluate_time_series
 from .timeseries_csv import load_time_slices_csv
+from .recovery_cli import add_recovery_parser, run_recovery_cli
 
 
 def main() -> None:
@@ -65,6 +66,8 @@ def main() -> None:
     capacity.add_argument("--productive-factor", type=float, default=0.85)
     capacity.add_argument("--hours", type=float, default=8760.0)
     capacity.add_argument("--tokens-per-productive-gpu-hour", type=float)
+
+    add_recovery_parser(subparsers)
 
     timeseries = subparsers.add_parser("timeseries")
     timeseries.add_argument("csv")
@@ -135,6 +138,9 @@ def main() -> None:
         )
         print(json.dumps(bundle, indent=2))
         return
+
+    if args.command == "recovery":
+        raise SystemExit(run_recovery_cli(args))
 
     if args.command == "timeseries":
         result = evaluate_time_series(
