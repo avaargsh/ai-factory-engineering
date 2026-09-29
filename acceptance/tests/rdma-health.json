@@ -1,0 +1,8 @@
+{
+  "apiVersion":"aifactory.engineering/v1alpha1","kind":"AcceptanceTest",
+  "metadata":{"id":"rdma-health","name":"RDMA transport health","layer":"fabric"},
+  "spec":{"objective":"Evaluate normalized RDMA transport error counters against an explicitly bound site baseline.","metrics":[
+    {"name":"rdma_tx_discards","op":"lte","threshold":0,"unit":"count","aggregation":"last"},
+    {"name":"rdma_rx_errors","op":"lte","threshold":0,"unit":"count","aggregation":"last"}
+  ],"evidence":[{"source":"raw-collector-output","required":true,"description":"SHA-256-addressed raw RDMA collector output."}]}
+}
