@@ -1,0 +1,20 @@
+{
+  "id": "nccl-collective",
+  "layer": "fabric",
+  "intent": "Prove scale-out collective efficiency under the declared placement and topology.",
+  "required_evidence": [
+    "nccl_test_output",
+    "gpu_topology",
+    "network_topology",
+    "rdma_counters"
+  ],
+  "acceptance": {
+    "collectives": [
+      "all_reduce",
+      "all_gather",
+      "reduce_scatter",
+      "all_to_all"
+    ],
+    "principle": "evaluate useful collective efficiency against the declared baseline"
+  }
+}
