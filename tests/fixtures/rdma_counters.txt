@@ -1,0 +1,5 @@
+port_xmit_discards: 0
+port_rcv_errors: 0
+np_ecn_marked_roce_packets: 128
+np_cnp_sent: 64
+rx_prio3_pause_duration: 2048
