@@ -21,7 +21,7 @@ def tests(nccl_threshold=100.0):
       LiveTest("rdma",("rdma-stat",),spec("rdma-health"),(
         TypedBaseline("D-RX","rdma_rx_errors","lte",0,"count","demo"),TypedBaseline("D-TX","rdma_tx_discards","lte",0,"count","demo")), "fabric-gate","rdma-1"),
       LiveTest("nccl",("nccl-tests",),spec("nccl-collective"),(
-        TypedBaseline("D-NCCL","nccl_busbw_gbps","gte",nccl_threshold,"GB/s","demo"),), "fabric-gate","nccl-1")]
+        TypedBaseline("D-NCCL","nccl_busbw_gbps","gte",nccl_threshold,"GB/s","demo"), TypedBaseline("D-NCCL-WRONG","nccl_wrong_total","eq",0,"count","demo")), "fabric-gate","nccl-1")]
 
 def test_live_commissioning_passes_only_after_evidence_evaluation(tmp_path):
     result=run_live_commissioning(tests=tests(),gates=[GateSpec("fabric-gate","fabric",("rdma-health","nccl-collective"))],runner=RoutedRunner(),output_dir=tmp_path,topology_ref="demo")
