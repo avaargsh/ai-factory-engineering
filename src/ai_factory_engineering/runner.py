@@ -4,7 +4,7 @@ import hashlib
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Protocol, Sequence
 
 
 class CollectorExecutionError(RuntimeError):
@@ -17,6 +17,11 @@ class CommandResult:
     returncode: int
     stdout: str
     stderr: str
+
+
+class Runner(Protocol):
+    def run(self, command: Sequence[str], *, timeout_seconds: float = 60.0) -> CommandResult:
+        ...
 
 
 class LocalCommandRunner:
