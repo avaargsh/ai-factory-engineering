@@ -1,0 +1,4 @@
+GPU0 Link 0: Active tx_errors 0 rx_errors 0
+GPU0 Link 1: Active tx_errors 0 rx_errors 0
+GPU1 Link 0: Active tx_errors 0 rx_errors 0
+GPU1 Link 1: Inactive tx_errors 1 rx_errors 0
