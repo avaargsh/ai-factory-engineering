@@ -1,0 +1,16 @@
+{
+  "id": "golden-factory-576",
+  "factory": {
+    "gpu_count": 576,
+    "accelerator": "H100-SXM",
+    "network": "RoCEv2",
+    "power_mw": 8
+  },
+  "objectives": {
+    "productive_gpu_ratio": 0.95,
+    "availability": 0.99,
+    "goodput": {
+      "principle": "SLO-compliant useful work rather than raw accelerator occupancy"
+    }
+  }
+}
