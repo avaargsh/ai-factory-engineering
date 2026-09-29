@@ -79,3 +79,31 @@ def persist_raw_artifact(
         "uri": str(path),
         "checksum": f"sha256:{digest}",
     }
+
+
+@dataclass(frozen=True)
+class SshCommandRunner:
+    host: str
+    user: str | None = None
+    port: int | None = None
+    identity_file: str | None = None
+    local_runner: Runner | None = None
+
+    def run(
+        self,
+        command: Sequence[str],
+        *,
+        timeout_seconds: float = 60.0,
+    ) -> CommandResult:
+        if not command:
+            raise CollectorExecutionError("collector command must not be empty")
+        target = f"{self.user}@{self.host}" if self.user else self.host
+        ssh_command: list[str] = ["ssh", "-o", "BatchMode=yes"]
+        if self.port is not None:
+            ssh_command.extend(["-p", str(self.port)])
+        if self.identity_file is not None:
+            ssh_command.extend(["-i", self.identity_file])
+        ssh_command.append(target)
+        ssh_command.extend(command)
+        backend = self.local_runner or LocalCommandRunner()
+        return backend.run(ssh_command, timeout_seconds=timeout_seconds)
