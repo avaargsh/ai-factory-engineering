@@ -1,0 +1,26 @@
+{
+  "id": "golden-factory-576-runtime",
+  "design_intent_ref": "acceptance/examples/576-gpu-design-intent.json",
+  "gates": [
+    {
+      "id": "gpu",
+      "layer": "compute",
+      "tests": ["dcgm-health", "nvlink-bandwidth"],
+      "acceptance_policy": {"fail_closed": true}
+    },
+    {
+      "id": "fabric",
+      "layer": "fabric",
+      "depends_on": ["gpu"],
+      "tests": ["rdma-health", "nccl-collective"],
+      "acceptance_policy": {"fail_closed": true}
+    },
+    {
+      "id": "runtime",
+      "layer": "runtime",
+      "depends_on": ["fabric"],
+      "tests": ["inference-slo"],
+      "acceptance_policy": {"fail_closed": true}
+    }
+  ]
+}
