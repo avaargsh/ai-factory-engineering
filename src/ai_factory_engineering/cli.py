@@ -95,7 +95,17 @@ def main() -> None:
         required=True,
     )
 
-    args = parser.parse_args()
+    argv = None
+    import sys
+    raw_argv = sys.argv[1:]
+    collector_tail = []
+    if raw_argv[:1] == ["run-collector"] and "--" in raw_argv:
+        boundary = raw_argv.index("--")
+        collector_tail = raw_argv[boundary + 1:]
+        raw_argv = raw_argv[:boundary]
+    args = parser.parse_args(raw_argv)
+    if args.command == "run-collector":
+        args.collector_command = collector_tail
 
     if args.command == "validate-test":
         doc = load_and_validate_test_spec(args.path)
