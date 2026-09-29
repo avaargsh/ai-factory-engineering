@@ -1,0 +1,29 @@
+{
+  "id": "inference-pod-loss-v1",
+  "layer": "reliability",
+  "fault": {
+    "kind": "serving-pod-loss",
+    "injection": "delete one serving Pod under steady declared load"
+  },
+  "required_evidence": [
+    "fault_timestamp",
+    "kubernetes_pod_events",
+    "replacement_pod_ready_timestamp",
+    "vllm_latency_metrics",
+    "request_success_metrics",
+    "baseline_goodput",
+    "degraded_goodput",
+    "slo_recovered_timestamp"
+  ],
+  "measurements": [
+    "pod_recovery_time_s",
+    "slo_recovery_time_s",
+    "goodput_loss_ratio"
+  ],
+  "invariants": [
+    "replacement Pod readiness is not equivalent to service SLO recovery",
+    "recovery is evaluated under a declared steady load",
+    "goodput loss is measured against a pre-fault baseline",
+    "numeric recovery thresholds belong to a workload/site reliability profile"
+  ]
+}
