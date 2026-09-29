@@ -1,0 +1,27 @@
+{
+  "id": "inference-interactive-example-v1",
+  "scope": "example interactive workload fixture",
+  "load_profile": {
+    "concurrency": 8,
+    "input_tokens": "fixture-defined",
+    "output_tokens": "fixture-defined"
+  },
+  "rules": [
+    {
+      "metric": "ttft_p95_ms",
+      "operator": "lte",
+      "value": 200,
+      "unit": "ms"
+    },
+    {
+      "metric": "tpot_p95_ms",
+      "operator": "lte",
+      "value": 50,
+      "unit": "ms/token"
+    }
+  ],
+  "provenance": {
+    "kind": "test-fixture",
+    "note": "Demonstration SLO for executable tests only; not a universal production recommendation."
+  }
+}
