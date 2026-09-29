@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DesignIntent",
+  "type": "object",
+  "required": [
+    "id",
+    "factory",
+    "objectives"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "factory": {
+      "type": "object",
+      "required": [
+        "gpu_count"
+      ],
+      "properties": {
+        "gpu_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "accelerator": {
+          "type": "string"
+        },
+        "network": {
+          "type": "string"
+        },
+        "power_mw": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "objectives": {
+      "type": "object",
+      "properties": {
+        "productive_gpu_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "goodput": {
+          "type": "object"
+        },
+        "availability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
