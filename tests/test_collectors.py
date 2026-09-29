@@ -24,3 +24,8 @@ def test_collector_output_can_be_wrapped_as_evidence():
     bundle=build_evidence_bundle(bundle_id="nccl-001",test_ref="nccl-collective",topology_ref="golden-576",collector="nccl-tests",collector_version="0.1",measurements=metrics,asset_refs=["rack-a/node-01"])
     assert bundle["testRef"] == "nccl-collective"
     assert bundle["provenance"]["collector"] == "nccl-tests"
+
+
+def test_nccl_parser_ignores_headers_and_empty_input():
+    assert parse_nccl_tests("") == ()
+    assert parse_nccl_tests("# size count type redop root time algbw busbw errors") == ()
