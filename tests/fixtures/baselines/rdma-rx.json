@@ -1,0 +1,1 @@
+{"id":"DEMO-RDMA-RX","metric":"rdma_rx_errors","operator":"lte","value":0,"unit":"count","scope":"demo reference run","source":"synthetic CI fixture"}

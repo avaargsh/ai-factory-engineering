@@ -1,0 +1,1 @@
+{"id":"DEMO-RDMA-TX","metric":"rdma_tx_discards","operator":"lte","value":0,"unit":"count","scope":"demo reference run","source":"synthetic CI fixture"}
