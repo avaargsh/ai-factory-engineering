@@ -31,4 +31,4 @@ def test_other_cli_commands_do_not_require_kubernetes(monkeypatch, capsys) -> No
         ],
     )
     main()
-    assert "productive_gpu_capacity" in capsys.readouterr().out
+    assert "productive_gpu_hours" in capsys.readouterr().out
