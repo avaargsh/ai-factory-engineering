@@ -1,0 +1,48 @@
+{
+  "id": "h100-rocev2-fabric-v1",
+  "network": "RoCEv2",
+  "intent": "Prove transport health before evaluating scale-out collective efficiency.",
+  "stages": [
+    {
+      "id": "transport-health",
+      "test_ref": "rdma-health",
+      "required_measurements": [
+        "rdma_tx_discards",
+        "rdma_rx_errors",
+        "roce_ecn_marked",
+        "roce_cnp_sent",
+        "pfc_rx_pause_duration"
+      ],
+      "semantics": {
+        "rdma_tx_discards": "loss/error signal; acceptance threshold must be declared",
+        "rdma_rx_errors": "receive error signal; acceptance threshold must be declared",
+        "roce_ecn_marked": "congestion signal, not an unconditional failure by itself",
+        "roce_cnp_sent": "congestion-control signal, not an unconditional failure by itself",
+        "pfc_rx_pause_duration": "flow-control pressure signal; interpret with duration/rate and workload context"
+      }
+    },
+    {
+      "id": "collective-performance",
+      "test_ref": "nccl-collective",
+      "depends_on": ["transport-health"],
+      "required_measurements": [
+        "nccl_largest_message_bytes",
+        "nccl_algbw_gbps",
+        "nccl_busbw_gbps"
+      ],
+      "collectives": [
+        "all_reduce",
+        "all_gather",
+        "reduce_scatter",
+        "all_to_all"
+      ],
+      "baseline_policy": "compare measured collective performance against an explicit topology/reference baseline; no repository-wide magic bandwidth threshold"
+    }
+  ],
+  "pending_site_baselines": [
+    "RDMA discard/error tolerance and observation window",
+    "ECN/CNP congestion envelope under declared load",
+    "PFC pause-duration envelope under declared load",
+    "NCCL bus bandwidth by collective, message size, node count, rail/topology, and placement"
+  ]
+}
