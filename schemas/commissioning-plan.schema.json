@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CommissioningPlan",
+  "type": "object",
+  "required": [
+    "id",
+    "gates"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "design_intent_ref": {
+      "type": "string"
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "$ref": "gate.schema.json"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}
