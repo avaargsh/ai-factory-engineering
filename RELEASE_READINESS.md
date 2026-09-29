@@ -9,6 +9,7 @@ A public v0.1 candidate should satisfy all of the following:
 - [x] raw artifacts preserved beside normalized evidence
 - [x] fail-closed cross-layer acceptance
 - [x] replay-verifiable AcceptanceArtifact
+- [x] standard nccl-tests out-of-place / in-place parser coverage
 - [x] explicit known limitations
 - [x] repository license selected and added (Apache-2.0)
 - [x] CONTRIBUTING.md added
@@ -21,6 +22,7 @@ A public v0.1 candidate should satisfy all of the following:
 - [ ] fresh-clone demo verification complete
 - [ ] controlled lab smoke run complete
 - [x] v0.1.0 release notes prepared
+- [x] stale pre-RC pull requests reconciled; no open pull requests remain at final RC audit
 - [ ] v0.1.0 tag/release created
 
 ## Dependency/license review
@@ -33,7 +35,7 @@ Declared direct/build/dev dependencies are intentionally small:
 
 No direct copyleft dependency was identified in the declared project metadata. Transitive dependencies should still be checked from a resolved lock/environment before a formal distribution review.
 
-The package metadata now explicitly declares `Apache-2.0` and includes `LICENSE`.
+The package metadata explicitly declares `Apache-2.0` and includes `LICENSE`.
 
 ## Open-source audit
 
@@ -54,11 +56,13 @@ Current default-branch code search returned no matches for representative creden
 
 Spot checks also returned no matches for generic customer markers or known prior-employer naming. Repository-tree review confirmed README-linked `DEVELOPMENT.md` and `RELEASE_READINESS.md` exist.
 
-Recent commit metadata was reviewed for suspicious credential/private-data wording with no obvious finding. This does **not** inspect every historical blob: a local full-history scanner such as gitleaks/trufflehog remains required before repository visibility changes.
+Recent commit metadata was reviewed for suspicious credential/private-data wording with no obvious finding. This does **not** inspect every historical blob: `make audit-history` from a real clone remains required before repository visibility changes.
+
+The final RC audit also reconciled stale pre-RC pull requests. Standard-format NCCL parser coverage was preserved on main rather than discarded with the old branch.
 
 ## Known limitations
 
-- Reference adapters normalize a narrow evidence contract; vendor output variants still need parser hardening.
+- Reference adapters normalize a deliberately narrow evidence contract. Standard nccl-tests out-of-place and in-place rows are covered, but additional vendor/version output variants still require fixture-backed validation.
 - HMAC attestation is a reference mechanism, not a production signing design.
 - The 576-GPU case is a deterministic reference case, not proof of a live 576-GPU acceptance run.
 - Site operators own command safety, maintenance windows and benchmark thresholds.
