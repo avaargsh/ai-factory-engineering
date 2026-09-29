@@ -1,0 +1,53 @@
+{
+  "id": "h100-sxm-80gb-v1",
+  "accelerator": "H100-SXM-80GB",
+  "intent": "Commission GPU node health and local GPU fabric before scale-out fabric acceptance.",
+  "references": [
+    {
+      "name": "NVIDIA H100 product specifications",
+      "kind": "vendor-spec",
+      "facts": {
+        "gpu_memory_gb": 80,
+        "gpu_memory_bandwidth_tb_s": 3.35,
+        "nvlink_max_bandwidth_gb_s": 900,
+        "max_tdp_w": 700
+      }
+    },
+    {
+      "name": "NVIDIA DCGM diagnostics",
+      "kind": "vendor-diagnostic",
+      "tests": [
+        "pcie",
+        "memory",
+        "memory_bandwidth",
+        "diagnostic",
+        "targeted_stress",
+        "targeted_power",
+        "nvbandwidth",
+        "nccl_tests"
+      ]
+    }
+  ],
+  "acceptance": {
+    "declared": [
+      {
+        "baseline_ref": "acceptance/baselines/gpu-health.json",
+        "purpose": "zero-tolerance GPU health error gate"
+      }
+    ],
+    "pending_site_baselines": [
+      {
+        "test": "memory-bandwidth",
+        "reason": "vendor/theoretical bandwidth is reference context, not a site commissioning pass line"
+      },
+      {
+        "test": "nvlink-bandwidth",
+        "reason": "NVBandwidth reports measured single-host transfer bandwidth; site threshold must be tied to the installed HGX topology/reference run"
+      },
+      {
+        "test": "nccl-scale-out",
+        "reason": "single-host DCGM NCCL readiness is not the 576-GPU scale-out collective acceptance threshold"
+      }
+    ]
+  }
+}
