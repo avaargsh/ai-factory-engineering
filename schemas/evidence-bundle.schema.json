@@ -113,6 +113,66 @@
           "type": "string"
         }
       }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collector",
+        "collectedAt"
+      ],
+      "properties": {
+        "collector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "collectorVersion": {
+          "type": "string"
+        },
+        "collectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "assetRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workloadRef": {
+          "type": "string"
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "replayId",
+        "inputDigest"
+      ],
+      "properties": {
+        "replayId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputDigest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parentBundleId": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
     }
   }
 }
