@@ -50,7 +50,7 @@
 - [x] negative regression tests for threshold miss, collector error, missing evidence and dependency failure
 - [x] CommissioningPlan execution DAG
 - [x] DesignIntent schema
-- [ ] evidence provenance and replay metadata
+- [x] evidence provenance and replay metadata
 - [x] Gate-level report aggregation
 
 ## v0.6 — GPU + Fabric Commissioning
