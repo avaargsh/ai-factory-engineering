@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AcceptanceBaseline",
+  "type": "object",
+  "required": ["id", "metric", "operator", "value", "unit", "scope"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "metric": {"type": "string", "minLength": 1},
+    "operator": {"enum": ["eq", "lte", "gte", "lt", "gt"]},
+    "value": {"type": "number"},
+    "unit": {"type": "string", "minLength": 1},
+    "scope": {"type": "string", "minLength": 1},
+    "reference": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
