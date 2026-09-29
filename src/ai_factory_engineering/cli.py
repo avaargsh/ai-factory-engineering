@@ -13,6 +13,7 @@ from .acceptance_run import (
     load_acceptance_run_manifest,
 )
 from .capacity import CapacityInputs, calculate_capacity
+from .collector_execution import execute_collector_to_evidence
 from .collectors.dcgm import parse_dcgm_csv
 from .collectors.nccl import parse_nccl_tests, summarize_nccl
 from .collectors.nvlink import parse_nvlink_status
@@ -54,6 +55,17 @@ def main() -> None:
     collect.add_argument("--topology-ref", required=True)
     collect.add_argument("--collector-version", default="0.1")
     collect.add_argument("--asset-ref", action="append", default=[])
+
+    run_collector = subparsers.add_parser("run-collector")
+    run_collector.add_argument("collector", choices=["dcgm", "nvlink", "rdma", "nccl"])
+    run_collector.add_argument("--output-dir", required=True)
+    run_collector.add_argument("--bundle-id", required=True)
+    run_collector.add_argument("--test-ref", required=True)
+    run_collector.add_argument("--topology-ref", required=True)
+    run_collector.add_argument("--collector-version", default="0.1")
+    run_collector.add_argument("--asset-ref", action="append", default=[])
+    run_collector.add_argument("--timeout", type=float, default=60.0)
+    run_collector.add_argument("collector_command", nargs=argparse.REMAINDER)
 
     capacity = subparsers.add_parser("capacity")
     capacity.add_argument("--contract-mw", type=float, required=True)
@@ -115,6 +127,26 @@ def main() -> None:
             end="",
         )
         raise SystemExit(0 if result.passed else 2)
+
+    if args.command == "run-collector":
+        command = args.collector_command
+        if command and command[0] == "--":
+            command = command[1:]
+        if not command:
+            parser.error("run-collector requires a native command after --")
+        bundle = execute_collector_to_evidence(
+            collector=args.collector,
+            command=command,
+            output_dir=args.output_dir,
+            bundle_id=args.bundle_id,
+            test_ref=args.test_ref,
+            topology_ref=args.topology_ref,
+            collector_version=args.collector_version,
+            asset_refs=args.asset_ref,
+            timeout_seconds=args.timeout,
+        )
+        print(json.dumps(bundle, indent=2))
+        return
 
     if args.command == "collect":
         from pathlib import Path
