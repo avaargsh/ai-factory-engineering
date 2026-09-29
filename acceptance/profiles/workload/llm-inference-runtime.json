@@ -1,0 +1,43 @@
+{
+  "id": "llm-inference-runtime-v1",
+  "layer": "workload",
+  "intent": "Prove an admitted GPU serving workload produces SLO-compliant useful tokens rather than only reporting healthy pods or raw accelerator occupancy.",
+  "provider_examples": ["vLLM", "SGLang"],
+  "required_evidence": [
+    "runtime_identity",
+    "model_identity",
+    "model_ready_timeline",
+    "request_trace_summary",
+    "serving_metrics",
+    "gpu_metrics",
+    "load_profile"
+  ],
+  "measurements": [
+    {"metric": "model_ready_latency_s", "unit": "s"},
+    {"metric": "ttft_p50_ms", "unit": "ms"},
+    {"metric": "ttft_p95_ms", "unit": "ms"},
+    {"metric": "tpot_p50_ms", "unit": "ms/token"},
+    {"metric": "tpot_p95_ms", "unit": "ms/token"},
+    {"metric": "queue_time_p95_ms", "unit": "ms"},
+    {"metric": "request_success_ratio", "unit": "ratio"},
+    {"metric": "output_tokens_per_s", "unit": "token/s"},
+    {"metric": "slo_compliant_request_ratio", "unit": "ratio"},
+    {"metric": "gpu_utilization_avg", "unit": "ratio"},
+    {"metric": "kv_cache_usage_avg", "unit": "ratio"}
+  ],
+  "invariants": [
+    "runtime and model identity must be recorded",
+    "load profile must be recorded with concurrency and request/token distribution",
+    "request success must be measured independently from latency SLO compliance",
+    "raw token throughput must not substitute for SLO-compliant goodput",
+    "acceptance thresholds must be declared by workload/site profile"
+  ],
+  "pending_site_baselines": [
+    "model readiness latency",
+    "TTFT distribution",
+    "TPOT distribution",
+    "queue-time envelope",
+    "request success ratio",
+    "SLO-compliant request ratio / goodput"
+  ]
+}
