@@ -21,26 +21,30 @@ def ingest_evidence_bundles(
     collected = []
     for path in paths:
         bundle = load_and_validate_evidence_bundle(path)
-        test_id = str(
-            bundle.get("testId")
-            or bundle.get("test_id")
-            or bundle.get("metadata", {}).get("testId")
-            or Path(path).stem
-        )
         collected.append(
-            CollectedEvidence(test_id=test_id, bundle=bundle, source=str(path))
+            CollectedEvidence(
+                test_id=str(bundle["testRef"]),
+                bundle=bundle,
+                source=str(path),
+            )
         )
     return tuple(collected)
 
 
-def evidence_to_outcome(
-    item: CollectedEvidence,
-    *,
-    status: GateStatus,
-) -> TestOutcome:
+def evidence_to_outcome(item: CollectedEvidence) -> TestOutcome:
+    result = item.bundle.get("result")
+    if not isinstance(result, Mapping) or "passed" not in result:
+        return TestOutcome(
+            test_id=item.test_id,
+            status=GateStatus.PENDING,
+            evidence_complete=False,
+            reason="validated EvidenceBundle has no collector result",
+        )
+
+    passed = bool(result["passed"])
     return TestOutcome(
         test_id=item.test_id,
-        status=status,
+        status=GateStatus.PASS if passed else GateStatus.FAIL,
         evidence_complete=True,
-        reason=f"validated EvidenceBundle from {item.source}",
+        reason=str(result.get("notes", "")),
     )
