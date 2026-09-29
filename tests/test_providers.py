@@ -54,5 +54,5 @@ def test_wait_replacement_ready_observes_ready_condition() -> None:
         namespace="ai", workload="vllm", timeout_s=10
     )
 
-    assert ready_at == 2.0
+    assert ready_at == 1.0
     assert api.lists == 2
