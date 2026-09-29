@@ -25,6 +25,9 @@ from .run_report import render_acceptance_run_markdown
 from .timeseries import TimeSeriesInputs, evaluate_time_series
 from .timeseries_csv import load_time_slices_csv
 from .recovery_cli import add_recovery_parser, run_recovery_cli
+from .commissioning_manifest import load_live_manifest
+from .live_commissioning import run_live_commissioning
+from .commissioning_report import commissioning_run_document, render_commissioning_markdown
 
 
 def main() -> None:
@@ -65,6 +68,10 @@ def main() -> None:
     run_collector.add_argument("--collector-version", default="0.1")
     run_collector.add_argument("--asset-ref", action="append", default=[])
     run_collector.add_argument("--timeout", type=float, default=60.0)
+
+    commission = subparsers.add_parser("commission")
+    commission.add_argument("manifest")
+    commission.add_argument("--output-dir", required=True)
 
     capacity = subparsers.add_parser("capacity")
     capacity.add_argument("--contract-mw", type=float, required=True)
@@ -179,6 +186,17 @@ def main() -> None:
         )
         print(json.dumps(bundle, indent=2))
         return
+
+    if args.command == "commission":
+        from pathlib import Path
+        run_id, topology_ref, gates, tests = load_live_manifest(args.manifest)
+        output_dir = Path(args.output_dir); output_dir.mkdir(parents=True, exist_ok=True)
+        result = run_live_commissioning(tests=tests, gates=gates, runner=__import__("ai_factory_engineering.runner", fromlist=["LocalCommandRunner"]).LocalCommandRunner(), output_dir=output_dir, topology_ref=topology_ref)
+        document = commissioning_run_document(run_id, topology_ref, result)
+        (output_dir / "commissioning-run.json").write_text(json.dumps(document, indent=2, default=str) + "\n", encoding="utf-8")
+        (output_dir / "commissioning-report.md").write_text(render_commissioning_markdown(run_id, topology_ref, result), encoding="utf-8")
+        print(render_commissioning_markdown(run_id, topology_ref, result), end="")
+        raise SystemExit(0 if document["status"] == "PASS" else 2)
 
     if args.command == "recovery":
         raise SystemExit(run_recovery_cli(args))
