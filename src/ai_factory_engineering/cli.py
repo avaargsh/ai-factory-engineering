@@ -65,7 +65,6 @@ def main() -> None:
     run_collector.add_argument("--collector-version", default="0.1")
     run_collector.add_argument("--asset-ref", action="append", default=[])
     run_collector.add_argument("--timeout", type=float, default=60.0)
-    run_collector.add_argument("collector_command", nargs=argparse.REMAINDER)
 
     capacity = subparsers.add_parser("capacity")
     capacity.add_argument("--contract-mw", type=float, required=True)
