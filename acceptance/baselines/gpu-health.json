@@ -1,0 +1,10 @@
+{
+  "id": "GPU-001",
+  "metric": "xid_ecc_errors",
+  "operator": "eq",
+  "value": 0,
+  "unit": "count",
+  "scope": "per commissioning run",
+  "reference": "acceptance/profiles/gpu/dcgm-health.json",
+  "source": "repository acceptance matrix"
+}
