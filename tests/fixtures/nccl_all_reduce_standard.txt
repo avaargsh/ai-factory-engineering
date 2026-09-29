@@ -1,0 +1,4 @@
+# out-of-place                       in-place
+# size count type redop root time algbw busbw #wrong time algbw busbw #wrong
+4194304 1048576 float sum -1 40.0 90.0 91.0 0 41.0 89.0 90.0 0
+8388608 2097152 float sum -1 75.0 111.0 112.35 0 76.0 110.0 111.2 0
