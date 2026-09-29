@@ -39,3 +39,40 @@
 - [x] energy cost per 1M Tokens
 - [ ] brownfield retrofit model
 - [ ] broader unit-economics cost layers
+
+
+## v0.5 — Cross-Layer Commissioning
+- [x] Gate schema and runtime contract
+- [x] dependency-aware Gate evaluation
+- [x] distinguish FAIL / ERROR / BLOCKED
+- [x] fail-closed missing evidence semantics
+- [x] Facility Gate Golden Path profiles
+- [x] negative regression tests for threshold miss, collector error, missing evidence and dependency failure
+- [ ] CommissioningPlan execution DAG
+- [ ] DesignIntent schema
+- [ ] evidence provenance and replay metadata
+- [ ] Gate-level report aggregation
+
+## v0.6 — GPU + Fabric Commissioning
+- [ ] DCGM / PCIe / NVLink evidence collectors
+- [ ] RDMA / RoCE collector
+- [ ] NCCL benchmark adapter
+- [ ] topology evidence
+- [ ] collective efficiency model
+
+## v0.7 — Workload Commissioning
+- [ ] Kubernetes placement evidence
+- [ ] gang / topology acceptance
+- [ ] distributed runtime acceptance
+- [ ] training and inference workload adapters
+- [ ] Token SLO Gate
+
+## v0.8 — Capacity × Reliability
+- [ ] fault-domain model
+- [ ] fault -> blast radius
+- [ ] fault -> lost productive GPU-hours
+- [ ] fault -> lost tokens / model progress
+- [ ] Effective Compute Efficiency
+
+## v0.9 — AI Factory Control Plane
+- [ ] Desired State -> Commission -> Observe -> Evaluate -> Decide -> Remediate -> Replay
