@@ -1,0 +1,13 @@
+{
+  "id": "dcgm-health",
+  "layer": "compute",
+  "intent": "Prove accelerator health before topology and collective tests.",
+  "required_evidence": [
+    "dcgm_diagnostic",
+    "gpu_inventory",
+    "driver_version"
+  ],
+  "acceptance": {
+    "critical_health_errors": 0
+  }
+}
