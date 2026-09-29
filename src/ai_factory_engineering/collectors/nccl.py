@@ -15,8 +15,8 @@ class NcclSample:
 # Normalized nccl-tests fixture columns:
 # size count type redop root time algbw busbw errors
 _ROW = re.compile(
-    r"^\\s*(?P<size>\\d+)\\s+\\d+\\s+\\S+\\s+\\S+\\s+\\S+\\s+"
-    r"(?P<time>[0-9.]+)\\s+(?P<algbw>[0-9.]+)\\s+(?P<busbw>[0-9.]+)"
+    r"^\s*(?P<size>\d+)\s+\d+\s+\S+\s+\S+\s+\S+\s+"
+    r"(?P<time>[0-9.]+)\s+(?P<algbw>[0-9.]+)\s+(?P<busbw>[0-9.]+)"
 )
 
 
