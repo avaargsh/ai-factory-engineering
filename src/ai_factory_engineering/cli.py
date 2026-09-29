@@ -18,6 +18,7 @@ from .collectors.nccl import parse_nccl_tests, summarize_nccl
 from .collectors.nvlink import parse_nvlink_status
 from .collectors.rdma import normalize_rdma, parse_rdma_counters
 from .evidence import build_evidence_bundle
+from .runner import LocalCommandRunner, persist_raw_artifact
 from .evaluator import evaluate_acceptance
 from .report import render_acceptance_markdown
 from .run_report import render_acceptance_run_markdown
@@ -53,6 +54,17 @@ def main() -> None:
     collect.add_argument("--topology-ref", required=True)
     collect.add_argument("--collector-version", default="0.1")
     collect.add_argument("--asset-ref", action="append", default=[])
+
+    run_collector = subparsers.add_parser("run-collector")
+    run_collector.add_argument("collector", choices=["dcgm", "nvlink", "rdma", "nccl"])
+    run_collector.add_argument("--command", nargs="+", required=True)
+    run_collector.add_argument("--output-dir", required=True)
+    run_collector.add_argument("--bundle-id", required=True)
+    run_collector.add_argument("--test-ref", required=True)
+    run_collector.add_argument("--topology-ref", required=True)
+    run_collector.add_argument("--collector-version", default="0.1")
+    run_collector.add_argument("--asset-ref", action="append", default=[])
+    run_collector.add_argument("--timeout", type=float, default=60.0)
 
     capacity = subparsers.add_parser("capacity")
     capacity.add_argument("--contract-mw", type=float, required=True)
@@ -112,6 +124,18 @@ def main() -> None:
             end="",
         )
         raise SystemExit(0 if result.passed else 2)
+
+    if args.command == "run-collector":
+        result = LocalCommandRunner().run(args.command, timeout_seconds=args.timeout)
+        artifact = persist_raw_artifact(output_dir=args.output_dir, name=f"{args.bundle_id}.txt", content=result.stdout)
+        text = result.stdout
+        if args.collector == "dcgm": measurements = parse_dcgm_csv(text)
+        elif args.collector == "nvlink": measurements = parse_nvlink_status(text)
+        elif args.collector == "rdma": measurements = normalize_rdma(parse_rdma_counters(text))
+        else: measurements = summarize_nccl(parse_nccl_tests(text))
+        bundle = build_evidence_bundle(bundle_id=args.bundle_id,test_ref=args.test_ref,topology_ref=args.topology_ref,collector=args.collector,collector_version=args.collector_version,measurements=measurements,artifacts=[artifact],asset_refs=args.asset_ref)
+        print(json.dumps(bundle, indent=2))
+        return
 
     if args.command == "collect":
         from pathlib import Path
