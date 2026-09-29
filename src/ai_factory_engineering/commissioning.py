@@ -14,6 +14,7 @@ class GateStatus(str, Enum):
 
 @dataclass(frozen=True)
 class TestOutcome:
+    __test__ = False
     test_id: str
     status: GateStatus
     evidence_complete: bool = True
