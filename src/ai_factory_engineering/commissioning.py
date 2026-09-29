@@ -57,6 +57,21 @@ def evaluate_gate(spec: GateSpec, outcomes: Iterable[TestOutcome], dependencies:
     if incomplete and spec.fail_closed:
         return GateDecision(spec.id, GateStatus.FAIL, tuple(f"incomplete evidence: {o.test_id}" for o in incomplete))
 
+    blocked_or_pending = [
+        o
+        for o in selected
+        if o.status in {GateStatus.BLOCKED, GateStatus.PENDING}
+    ]
+    if blocked_or_pending:
+        return GateDecision(
+            spec.id,
+            GateStatus.BLOCKED,
+            tuple(
+                o.reason or f"test not ready: {o.test_id}"
+                for o in blocked_or_pending
+            ),
+        )
+
     failures = [o for o in selected if o.status == GateStatus.FAIL]
     if failures:
         return GateDecision(spec.id, GateStatus.FAIL, tuple(o.reason or f"test failed: {o.test_id}" for o in failures))
