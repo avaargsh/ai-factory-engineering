@@ -107,3 +107,34 @@ class SshCommandRunner:
         ssh_command.extend(command)
         backend = self.local_runner or LocalCommandRunner()
         return backend.run(ssh_command, timeout_seconds=timeout_seconds)
+
+
+@dataclass(frozen=True)
+class KubernetesExecRunner:
+    namespace: str
+    pod: str
+    container: str | None = None
+    kubeconfig: str | None = None
+    context: str | None = None
+    local_runner: Runner | None = None
+
+    def run(
+        self,
+        command: Sequence[str],
+        *,
+        timeout_seconds: float = 60.0,
+    ) -> CommandResult:
+        if not command:
+            raise CollectorExecutionError("collector command must not be empty")
+        kubectl_command: list[str] = ["kubectl"]
+        if self.kubeconfig is not None:
+            kubectl_command.extend(["--kubeconfig", self.kubeconfig])
+        if self.context is not None:
+            kubectl_command.extend(["--context", self.context])
+        kubectl_command.extend(["exec", "-n", self.namespace, self.pod])
+        if self.container is not None:
+            kubectl_command.extend(["-c", self.container])
+        kubectl_command.append("--")
+        kubectl_command.extend(command)
+        backend = self.local_runner or LocalCommandRunner()
+        return backend.run(kubectl_command, timeout_seconds=timeout_seconds)
