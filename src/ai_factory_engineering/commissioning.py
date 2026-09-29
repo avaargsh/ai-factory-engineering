@@ -109,3 +109,23 @@ def validate_plan(gates: Iterable[GateSpec]) -> tuple[str, ...]:
     for gate in gate_list:
         visit(gate.id)
     return tuple(order)
+
+
+
+def evaluate_plan(
+    gates: Iterable[GateSpec],
+    outcomes: Mapping[str, Iterable[TestOutcome]],
+) -> tuple[GateDecision, ...]:
+    """Evaluate the whole commissioning DAG in dependency order."""
+    gate_list = tuple(gates)
+    order = validate_plan(gate_list)
+    by_id = {gate.id: gate for gate in gate_list}
+    decisions: dict[str, GateDecision] = {}
+    for gate_id in order:
+        gate = by_id[gate_id]
+        decisions[gate_id] = evaluate_gate(
+            gate,
+            outcomes.get(gate_id, ()),
+            dependencies=decisions,
+        )
+    return tuple(decisions[gate_id] for gate_id in order)
