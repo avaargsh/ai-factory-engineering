@@ -57,7 +57,7 @@ def main() -> None:
 
     run_collector = subparsers.add_parser("run-collector")
     run_collector.add_argument("collector", choices=["dcgm", "nvlink", "rdma", "nccl"])
-    run_collector.add_argument("--command", nargs="+", required=True)
+    run_collector.add_argument("command", nargs=argparse.REMAINDER)
     run_collector.add_argument("--output-dir", required=True)
     run_collector.add_argument("--bundle-id", required=True)
     run_collector.add_argument("--test-ref", required=True)
@@ -126,7 +126,12 @@ def main() -> None:
         raise SystemExit(0 if result.passed else 2)
 
     if args.command == "run-collector":
-        result = LocalCommandRunner().run(args.command, timeout_seconds=args.timeout)
+        collector_command = args.command
+        if collector_command and collector_command[0] == "--":
+            collector_command = collector_command[1:]
+        if not collector_command:
+            parser.error("run-collector requires a command after --")
+        result = LocalCommandRunner().run(collector_command, timeout_seconds=args.timeout)
         artifact = persist_raw_artifact(output_dir=args.output_dir, name=f"{args.bundle_id}.txt", content=result.stdout)
         text = result.stdout
         if args.collector == "dcgm": measurements = parse_dcgm_csv(text)
