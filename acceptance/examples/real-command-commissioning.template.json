@@ -1,0 +1,42 @@
+{
+  "runId": "site-commissioning-001",
+  "topologyRef": "CHANGE-ME://site/rack-or-cell",
+  "gates": [
+    {"id": "compute", "layer": "compute", "tests": ["dcgm-health", "nvlink-bandwidth"], "failClosed": true},
+    {"id": "fabric", "layer": "fabric", "tests": ["rdma-health", "nccl-collective"], "dependsOn": ["compute"], "failClosed": true}
+  ],
+  "tests": [
+    {
+      "collector": "dcgm",
+      "command": ["dcgmi", "diag", "-r", "1"],
+      "test": "../tests/dcgm-health.json",
+      "baselines": [],
+      "gateId": "compute",
+      "bundleId": "dcgm-site"
+    },
+    {
+      "collector": "nvlink",
+      "command": ["nvidia-smi", "nvlink", "-s"],
+      "test": "../tests/nvlink-bandwidth.json",
+      "baselines": [],
+      "gateId": "compute",
+      "bundleId": "nvlink-site"
+    },
+    {
+      "collector": "rdma",
+      "command": ["CHANGE-ME-rdma-command"],
+      "test": "../tests/rdma-health.json",
+      "baselines": ["../../tests/fixtures/baselines/rdma-tx.json", "../../tests/fixtures/baselines/rdma-rx.json"],
+      "gateId": "fabric",
+      "bundleId": "rdma-site"
+    },
+    {
+      "collector": "nccl",
+      "command": ["CHANGE-ME-nccl-tests-command"],
+      "test": "../tests/nccl-collective.json",
+      "baselines": ["../../tests/fixtures/baselines/nccl.json", "../../tests/fixtures/baselines/nccl-correctness.json"],
+      "gateId": "fabric",
+      "bundleId": "nccl-site"
+    }
+  ]
+}
