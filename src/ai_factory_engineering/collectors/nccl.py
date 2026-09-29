@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 
 
@@ -11,41 +10,56 @@ class NcclSample:
     algbw_gbps: float
     busbw_gbps: float
     wrong: int = 0
-
-
-# Normalized nccl-tests fixture columns:
-# size count type redop root time algbw busbw errors
-_ROW = re.compile(
-    r"^\s*(?P<size>\d+)\s+\d+\s+\S+\s+\S+\s+\S+\s+"
-    r"(?P<time>[0-9.]+)\s+(?P<algbw>[0-9.]+)\s+(?P<busbw>[0-9.]+)"
-)
+    inplace_time_us: float | None = None
+    inplace_algbw_gbps: float | None = None
+    inplace_busbw_gbps: float | None = None
+    inplace_wrong: int = 0
 
 
 def parse_nccl_tests(text: str) -> tuple[NcclSample, ...]:
-    """Parse normalized nccl-tests observations without applying thresholds."""
-    samples: list[NcclSample] = []
+    """Parse nccl-tests perf rows without applying acceptance thresholds.
+
+    Supports the repository's normalized 9-column rows and standard perf rows
+    containing both out-of-place and in-place result groups.
+    """
+    samples=[]
     for line in text.splitlines():
-        match = _ROW.match(line)
-        if match:
-            samples.append(
-                NcclSample(
-                    size_bytes=int(match.group("size")),
-                    time_us=float(match.group("time")),
-                    algbw_gbps=float(match.group("algbw")),
-                    busbw_gbps=float(match.group("busbw")),
-                    wrong=int(float(line.split()[8])) if len(line.split()) > 8 else 0,
-                )
-            )
+        stripped=line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        tokens=stripped.split()
+        if len(tokens) < 9:
+            continue
+        try:
+            size=int(tokens[0]); time=float(tokens[5]); algbw=float(tokens[6]); busbw=float(tokens[7]); wrong=int(float(tokens[8]))
+        except ValueError:
+            continue
+        kwargs={}
+        if len(tokens) >= 13:
+            try:
+                kwargs={
+                    "inplace_time_us":float(tokens[9]),
+                    "inplace_algbw_gbps":float(tokens[10]),
+                    "inplace_busbw_gbps":float(tokens[11]),
+                    "inplace_wrong":int(float(tokens[12])),
+                }
+            except ValueError:
+                continue
+        samples.append(NcclSample(size,time,algbw,busbw,wrong,**kwargs))
     return tuple(samples)
 
 
 def summarize_nccl(samples: tuple[NcclSample, ...]) -> dict[str, float]:
     if not samples:
         return {}
-    largest = max(samples, key=lambda sample: sample.size_bytes)
-    return {
-        "nccl_largest_message_bytes": float(largest.size_bytes),
-        "nccl_algbw_gbps": largest.algbw_gbps,
-        "nccl_busbw_gbps": largest.busbw_gbps,
-        "nccl_wrong_total": float(sum(sample.wrong for sample in samples)),
+    largest=max(samples,key=lambda sample: sample.size_bytes)
+    metrics={
+        "nccl_largest_message_bytes":float(largest.size_bytes),
+        "nccl_algbw_gbps":largest.algbw_gbps,
+        "nccl_busbw_gbps":largest.busbw_gbps,
+        "nccl_wrong_total":float(sum(s.wrong+s.inplace_wrong for s in samples)),
     }
+    if largest.inplace_busbw_gbps is not None:
+        metrics["nccl_inplace_algbw_gbps"]=largest.inplace_algbw_gbps
+        metrics["nccl_inplace_busbw_gbps"]=largest.inplace_busbw_gbps
+    return metrics
