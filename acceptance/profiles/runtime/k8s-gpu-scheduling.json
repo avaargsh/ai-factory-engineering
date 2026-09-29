@@ -1,0 +1,47 @@
+{
+  "id": "k8s-gpu-scheduling-v1",
+  "layer": "runtime",
+  "intent": "Prove distributed GPU workloads are admitted and placed atomically on an acceptable topology before workload SLO testing.",
+  "provider_examples": [
+    "Kueue Topology Aware Scheduling",
+    "scheduler implementation exposing equivalent gang/topology evidence"
+  ],
+  "required_evidence": [
+    "workload_identity",
+    "requested_gpu_count",
+    "admission_timeline",
+    "pod_scheduling_events",
+    "assigned_nodes",
+    "assigned_gpu_devices",
+    "topology_domains"
+  ],
+  "measurements": [
+    {
+      "metric": "scheduler_admission_latency_s",
+      "meaning": "time from workload admission request to admitted/reserved state"
+    },
+    {
+      "metric": "workload_startup_latency_s",
+      "meaning": "time from admission request until the complete distributed workload is ready"
+    },
+    {
+      "metric": "scheduled_gpu_count",
+      "meaning": "GPU devices assigned to the admitted workload"
+    },
+    {
+      "metric": "ready_member_ratio",
+      "meaning": "ready workload members divided by declared members"
+    }
+  ],
+  "invariants": [
+    "partial placement must not be reported as successful gang admission",
+    "assigned GPU count must match the declared workload request",
+    "topology placement must be recorded as evidence rather than inferred from aggregate GPU count",
+    "startup latency threshold must come from an explicit site/workload baseline"
+  ],
+  "pending_site_baselines": [
+    "scheduler admission latency envelope",
+    "complete workload startup latency envelope",
+    "allowed topology domains / distance for each workload class"
+  ]
+}
