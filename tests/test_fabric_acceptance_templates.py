@@ -16,6 +16,7 @@ def test_fabric_reference_templates_validate_and_require_external_binding():
     ])
     nccl_bound = bind_typed_baselines(nccl, [
         TypedBaseline("DEMO-NCCL", "nccl_busbw_gbps", "gte", 1, "GB/s", "demo reference run"),
+        TypedBaseline("DEMO-NCCL-WRONG", "nccl_wrong_total", "eq", 0, "count", "demo reference run"),
     ])
     assert rdma_bound["spec"]["metrics"][0]["threshold"] == 0
     assert nccl_bound["spec"]["metrics"][0]["threshold"] == 1
