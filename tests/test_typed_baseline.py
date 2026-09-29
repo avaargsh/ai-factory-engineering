@@ -16,6 +16,6 @@ def test_gpu_health_baseline_is_machine_actionable() -> None:
     assert baseline.scope == "per commissioning run"
 
     rule = baseline.to_rule()
-    assert rule.metric == "xid_ecc_errors"
+    assert rule.metric == "gpu_ecc_uncorrected_total"
     assert rule.op == "eq"
     assert rule.value == 0.0
