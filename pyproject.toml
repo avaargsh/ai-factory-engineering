@@ -8,6 +8,8 @@ version = "0.1.0"
 description = "Cross-layer AI Factory engineering and acceptance toolkit."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 dependencies = [
   "jsonschema>=4.23",
 ]
