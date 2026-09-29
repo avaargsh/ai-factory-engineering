@@ -1,4 +1,4 @@
-from ai_factory_engineering.commissioning import CommissioningPlanError, GateDecision, GateSpec, GateStatus, TestOutcome, evaluate_gate, validate_plan
+from ai_factory_engineering.commissioning import CommissioningPlanError, GateDecision, GateSpec, GateStatus, TestOutcome, evaluate_gate, evaluate_plan, validate_plan
 
 
 def facility_gate():
@@ -65,3 +65,27 @@ def test_validate_plan_rejects_dependency_cycle():
     )
     with pytest.raises(CommissioningPlanError, match="dependency cycle"):
         validate_plan(gates)
+
+
+
+def test_evaluate_plan_propagates_failed_dependency_as_blocked():
+    gates = (
+        GateSpec("facility", "facility", ("power",)),
+        GateSpec("fabric", "fabric", ("nccl",), depends_on=("facility",)),
+        GateSpec("runtime", "runtime", ("serving",), depends_on=("fabric",)),
+    )
+    decisions = evaluate_plan(
+        gates,
+        {
+            "facility": (TestOutcome("power", GateStatus.FAIL, reason="power envelope exceeded"),),
+            "fabric": (TestOutcome("nccl", GateStatus.PASS),),
+            "runtime": (TestOutcome("serving", GateStatus.PASS),),
+        },
+    )
+    assert [decision.status for decision in decisions] == [
+        GateStatus.FAIL,
+        GateStatus.BLOCKED,
+        GateStatus.BLOCKED,
+    ]
+    assert decisions[1].reasons == ("dependency not passed: facility",)
+    assert decisions[2].reasons == ("dependency not passed: fabric",)
