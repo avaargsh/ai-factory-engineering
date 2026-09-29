@@ -1,65 +1,161 @@
 # AI Factory Engineering
 
-A docs-first engineering knowledge base and reference architecture for turning **MW of power into sustainable, measurable AI output**.
+Cross-layer commissioning and acceptance for AI infrastructure: prove that **Compute -> Fabric -> Runtime** can sustain declared workload SLOs, then seal the result as replayable evidence.
 
-The organizing question is:
+The project focuses on the engineering gap between "the hardware is installed" and "the AI factory is actually delivering useful, measurable output."
 
-> How does Energy / MW flow through Facility, GPU, Fabric, Runtime and Model layers to become Productive GPU Hours, Model Progress, Useful Tokens, SLO and economics?
+## Why this exists
 
-## Engineering spine
+A modern GPU cluster can look healthy at one layer and still fail as a system:
 
-```text
-Energy / MW
-  -> Facility
-  -> Rack / Pod
-  -> GPU
-  -> Fabric / Storage
-  -> Cluster
-  -> Runtime
-  -> Model
-  -> Token / Model Progress
-  -> SLO
-  -> Economics
-```
+- GPUs pass basic health checks while NVLink/NVSwitch underperform.
+- RDMA links are up while retry/symbol errors destroy collective performance.
+- NCCL bandwidth is acceptable while inference TTFT/TPOT misses the workload SLO.
+- Individual checks pass, but there is no signed cross-layer acceptance artifact tying evidence to a decision.
 
-Lifecycle:
+This repository turns those checks into one acceptance chain.
+
+## Golden path
 
 ```text
-Planning -> Design -> Build -> Commissioning -> Operations / SRE
-         -> Upgrade / Expansion -> Continuous Re-validation
+Native collector commands
+  -> raw stdout/stderr artifacts
+  -> EvidenceBundle
+  -> schema validation
+  -> TestOutcome
+  -> Compute Gate
+  -> Fabric Gate
+  -> Runtime Gate
+  -> AcceptanceDecision
+  -> AcceptanceArtifact
+  -> attestation
+  -> verification / replay
 ```
 
-## Five-layer model
+Reference evidence adapters currently cover:
 
-1. **Facility** — power, cooling, rack, structure and failure domains
-2. **Compute** — GPU, HBM, PCIe, NUMA, NVLink / NVSwitch
-3. **Fabric** — InfiniBand / RoCE, RDMA, NCCL and storage data paths
-4. **Runtime** — Kubernetes, scheduling, training / inference runtime and KV
-5. **Workload** — training, inference, MoE, long context, multimodal and Agent workloads
+- DCGM GPU health
+- NVLink health/bandwidth
+- RDMA port/error health
+- NCCL collective bandwidth/correctness
+- Inference SLO: TTFT P99, TPOT P99, success ratio
 
-## Core engineering models
+Thresholds are declared inputs. The framework does not hard-code a universal "good" NCCL bandwidth or latency target.
 
-- **Capacity Waterfall** — Installed -> Design -> Usable -> Allocatable -> Productive
-- **Multi-Roof Capacity** — capacity is bounded by the tightest Power / Cooling / Fabric / Storage / Runtime / Workload roof
-- **Fault-to-Token / Fault-to-Progress** — map infrastructure faults to lost productive output
-- **Engineering Digital Thread** — requirement -> design -> config -> test -> telemetry -> incident -> change -> re-validation
-- **Cross-Layer Acceptance** — prove real workloads can sustain contractual performance inside the designed power/thermal envelope
+## Five-minute demo
 
-## Repository scope
+Requirements: Python 3.11+.
+
+```bash
+make setup
+make test
+make demo
+```
+
+The deterministic demo requires no GPU hardware and writes:
 
 ```text
-docs/architecture/      system architecture and cross-layer models
-docs/facility/          power, cooling, rack and retrofit
-docs/compute/           GPU, topology and accelerator stack
-docs/fabric/            RoCE / IB / RDMA / NCCL
-docs/runtime/           Kubernetes, training and inference
-docs/reliability/       SRE, fault models and observability
-docs/acceptance/        commissioning and workload acceptance
-docs/economics/         capacity and unit economics
-casebook/               reference designs and field cases
-checklists/              design / go-live / expansion checklists
+.artifacts/demo/acceptance.json
 ```
 
-## Status
+It demonstrates the complete acceptance contract using repository fixtures.
 
-Private incubation repository. The current phase converts long-form research into canonical engineering notes, checklists, test matrices and reference architectures before public release.
+## Real-command smoke path
+
+Copy the commissioning template and replace every site-specific placeholder:
+
+```bash
+cp acceptance/examples/real-command-commissioning.template.json \
+   acceptance/examples/my-site-commissioning.json
+```
+
+Then run:
+
+```bash
+make smoke MANIFEST=acceptance/examples/my-site-commissioning.json
+```
+
+The manifest can invoke approved site commands such as `dcgmi`, `nvidia-smi nvlink`, RDMA tooling and `nccl-tests`. Raw command output is retained as evidence.
+
+## Architecture
+
+```text
+                    AI Factory Acceptance Plane
+
+  Compute                    Fabric                     Runtime
+┌────────────┐            ┌────────────┐            ┌──────────────┐
+│ DCGM       │            │ RDMA       │            │ Inference SLO│
+│ NVLink     │            │ NCCL       │            │ TTFT / TPOT  │
+└─────┬──────┘            └─────┬──────┘            └──────┬───────┘
+      │                         │                          │
+      └──────────────┬──────────┴──────────────┬──────────┘
+                     ▼                         ▼
+               EvidenceBundle            Gate DAG
+                     │                         │
+                     └──────────────┬──────────┘
+                                    ▼
+                           AcceptanceDecision
+                                    ▼
+                           AcceptanceArtifact
+                                    ▼
+                               Attestation
+                                    ▼
+                         Verification / Replay
+```
+
+## Design principles
+
+- **Fail closed.** Missing or incomplete evidence must not silently become PASS.
+- **Evidence first.** Preserve raw artifacts and provenance before deriving acceptance.
+- **Cross-layer, not device-only.** The acceptance unit is the delivered system/workload path.
+- **Thresholds are explicit.** Site topology and contractual SLOs define acceptance floors.
+- **Portable runner boundary.** Native commands stay outside domain logic.
+- **Replayable decision.** Acceptance artifacts are content-addressed and verifiable.
+
+## Repository map
+
+```text
+src/ai_factory_engineering/   acceptance, collectors, runner, reports, replay
+acceptance/tests/             AcceptanceTest specs
+acceptance/examples/          plans, templates and reference manifests
+examples/                     runnable demos
+tests/                        unit, contract and integration tests
+casebook/                     reference engineering cases
+docs/                         architecture and AI Factory engineering notes
+```
+
+## Current status
+
+v0.1 release candidate.
+
+Implemented:
+
+- native collector execution boundary
+- EvidenceBundle schema/validation
+- DCGM/NVLink/RDMA/NCCL/inference adapters
+- fail-closed cross-layer Gate DAG
+- deterministic 576-GPU reference acceptance demo
+- AcceptanceArtifact digest + reference attestation
+- real-command commissioning manifest template
+- `make demo` / `make smoke` developer workflow
+
+Not yet claimed:
+
+- a live 576-GPU production commissioning run
+- universal performance thresholds
+- production KMS/Sigstore/Cosign signing
+- hardware-specific parser coverage for every vendor/version
+- replacement for vendor diagnostics or site commissioning procedures
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) and [RELEASE_READINESS.md](RELEASE_READINESS.md).
+
+## Scope
+
+The broader engineering model remains:
+
+```text
+MW -> Facility -> Rack/Pod -> GPU -> Fabric -> Cluster
+   -> Runtime -> Model -> Token / Model Progress -> SLO / Economics
+```
+
+This repository currently concentrates executable code around the cross-layer commissioning and acceptance portion of that chain.
