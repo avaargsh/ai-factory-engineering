@@ -1,9 +1,12 @@
+import pytest
+
 from ai_factory_engineering.acceptance_artifact import build_acceptance_artifact
 from ai_factory_engineering.attestation import (
     attest_acceptance_artifact,
     verify_acceptance_attestation,
 )
 from ai_factory_engineering.commissioning import GateDecision, GateStatus
+from ai_factory_engineering.replay import canonical_digest
 from ai_factory_engineering.cross_layer_acceptance import (
     AcceptanceDisposition,
     CrossLayerAcceptanceDecision,
@@ -109,3 +112,27 @@ def test_attestation_can_pin_expected_key_id():
         secret=b"test-only-secret",
         expected_key_id="production-factory",
     )
+
+
+
+def test_attestation_refuses_rehashed_semantically_invalid_artifact():
+    value = artifact()
+    value["accepted"] = True
+    value["disposition"] = "ACCEPT"
+    value["gates"][0]["status"] = "FAIL"
+    payload = {
+        key: item
+        for key, item in value.items()
+        if key != "digest"
+    }
+    value["digest"] = canonical_digest(payload)
+
+    with pytest.raises(
+        ValueError,
+        match="cannot attest invalid acceptance artifact",
+    ):
+        attest_acceptance_artifact(
+            value,
+            key_id="commissioning-lab",
+            secret=b"test-only-secret",
+        )
