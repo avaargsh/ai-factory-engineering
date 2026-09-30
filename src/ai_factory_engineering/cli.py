@@ -38,6 +38,7 @@ from .recovery_cli import add_recovery_parser, run_recovery_cli
 from .commissioning_manifest import (
     load_live_manifest,
     load_manifest_annotations,
+    validate_controlled_lab_manifest,
 )
 from .live_commissioning import run_live_commissioning
 from .commissioning_report import commissioning_run_document, render_commissioning_markdown
@@ -92,6 +93,11 @@ def main() -> None:
     commission = subparsers.add_parser("commission")
     commission.add_argument("manifest")
     commission.add_argument("--output-dir", required=True)
+
+    validate_lab = subparsers.add_parser(
+        "validate-lab-manifest"
+    )
+    validate_lab.add_argument("manifest")
 
     attest = subparsers.add_parser("attest")
     attest.add_argument("artifact")
@@ -155,6 +161,15 @@ def main() -> None:
     args = parser.parse_args(raw_argv)
     if args.command == "run-collector":
         args.collector_command = collector_tail
+
+    if args.command == "validate-lab-manifest":
+        validate_controlled_lab_manifest(
+            args.manifest
+        )
+        print(
+            f"valid controlled-lab manifest: {args.manifest}"
+        )
+        return
 
     if args.command in {"attest", "verify-attestation"}:
         secret_value = os.environ.get(args.secret_env)
