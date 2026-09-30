@@ -6,8 +6,15 @@ from typing import Any
 from .live_commissioning import LiveCommissioningResult
 
 
-def commissioning_run_document(run_id: str, topology_ref: str, result: LiveCommissioningResult) -> dict[str, Any]:
-    return {
+def commissioning_run_document(
+    run_id: str,
+    topology_ref: str,
+    result: LiveCommissioningResult,
+    *,
+    annotations: dict[str, Any] | None = None,
+    acceptance_artifact_digest: str | None = None,
+) -> dict[str, Any]:
+    document = {
         "runId": run_id,
         "topologyRef": topology_ref,
         "status": "PASS" if all(g.status.value == "PASS" for g in result.gates) else "FAIL",
@@ -15,6 +22,11 @@ def commissioning_run_document(run_id: str, topology_ref: str, result: LiveCommi
         "tests": [asdict(a) for a in result.acceptance],
         "evidence": list(result.evidence),
     }
+    if annotations:
+        document["annotations"] = annotations
+    if acceptance_artifact_digest:
+        document["acceptanceArtifactDigest"] = acceptance_artifact_digest
+    return document
 
 
 def render_commissioning_markdown(run_id: str, topology_ref: str, result: LiveCommissioningResult) -> str:
