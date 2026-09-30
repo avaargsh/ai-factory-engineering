@@ -110,3 +110,76 @@ def load_manifest_annotations(
             doc.get("assetRefs", [])
         ),
     }
+
+
+
+def validate_controlled_lab_manifest(
+    path: str | Path,
+) -> None:
+    """Fail closed until a controlled-lab manifest is explicitly site-bound."""
+    path = Path(path)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+
+    def walk(value):
+        if isinstance(value, dict):
+            for item in value.values():
+                yield from walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                yield from walk(item)
+        elif isinstance(value, str):
+            yield value
+
+    placeholders = [
+        value
+        for value in walk(doc)
+        if "CHANGE-ME" in value
+    ]
+    if placeholders:
+        raise ValueError(
+            "controlled-lab manifest contains CHANGE-ME placeholders"
+        )
+
+    version_matrix = doc.get("versionMatrix")
+    if not isinstance(version_matrix, dict) or not version_matrix:
+        raise ValueError(
+            "controlled-lab manifest requires versionMatrix"
+        )
+    asset_refs = doc.get("assetRefs")
+    if not isinstance(asset_refs, list) or not asset_refs:
+        raise ValueError(
+            "controlled-lab manifest requires assetRefs"
+        )
+
+    gate_layers = {
+        gate.get("layer")
+        for gate in doc.get("gates", [])
+        if isinstance(gate, dict)
+    }
+    for required in ("compute", "runtime"):
+        if required not in gate_layers:
+            raise ValueError(
+                f"controlled-lab manifest requires {required} gate"
+            )
+
+    base = path.parent
+    for item in doc.get("tests", []):
+        for baseline in item.get("baselines", []):
+            baseline_path = base / baseline
+            payload = json.loads(
+                baseline_path.read_text(
+                    encoding="utf-8"
+                )
+            )
+            source = str(payload.get("source", ""))
+            scope = str(payload.get("scope", ""))
+            if (
+                "FAIL-CLOSED PLACEHOLDER" in source
+                or "CHANGE-ME" in source
+                or "CHANGE-ME" in scope
+            ):
+                raise ValueError(
+                    f"baseline is still a template: {baseline_path}"
+                )
+
+    load_live_manifest(path)
