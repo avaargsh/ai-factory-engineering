@@ -174,6 +174,32 @@ HMAC remains a reference mechanism. Production deployments should replace the
 signer/verifier with an asymmetric KMS/Sigstore/Cosign-backed implementation
 without changing the AcceptanceArtifact boundary.
 
+## Seal a controlled-lab acceptance result
+
+After a real commissioning run has produced an `AcceptanceArtifact`, the
+reference attestation can be created without putting the shared secret on the
+command line:
+
+```bash
+export AI_FACTORY_ATTESTATION_SECRET='...'
+
+ai-factory attest acceptance.json \
+  --key-id commissioning-lab \
+  --output acceptance.attestation.json
+
+ai-factory verify-attestation \
+  acceptance.json \
+  acceptance.attestation.json \
+  --expected-key-id commissioning-lab
+```
+
+The CLI reads the secret only from the named environment variable and never
+writes it into the artifact or attestation. The emitted attestation contains only
+the artifact digest, key identity, algorithm and signature.
+
+This remains the HMAC reference path for controlled integration. Production
+signing should use an asymmetric KMS/Sigstore/Cosign-backed verifier.
+
 ## Current status
 
 v0.1 release candidate.
