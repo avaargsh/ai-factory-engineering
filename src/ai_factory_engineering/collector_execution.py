@@ -9,7 +9,12 @@ from .collectors.nccl import parse_nccl_tests, summarize_nccl
 from .collectors.nvlink import parse_nvlink_status
 from .collectors.rdma import normalize_rdma, parse_rdma_counters
 from .evidence import build_evidence_bundle
-from .runner import LocalCommandRunner, Runner, persist_raw_artifact
+from .runner import (
+    CollectorExecutionError,
+    LocalCommandRunner,
+    Runner,
+    persist_raw_artifact,
+)
 
 
 Parser = Callable[[str], Mapping[str, float]]
@@ -50,19 +55,26 @@ def execute_collector_to_evidence(
         raise ValueError(f"unsupported collector: {collector}") from exc
 
     active_runner = runner or LocalCommandRunner()
-    result = active_runner.run(command, timeout_seconds=timeout_seconds)
+    try:
+        result = active_runner.run(
+            command,
+            timeout_seconds=timeout_seconds,
+        )
+    except CollectorExecutionError as exc:
+        if exc.result is not None:
+            _persist_raw_streams(
+                result=exc.result,
+                output_dir=output_dir,
+                bundle_id=bundle_id,
+                collector=collector,
+            )
+        raise
 
-    stdout_artifact = persist_raw_artifact(
+    stdout_artifact, stderr_artifact = _persist_raw_streams(
+        result=result,
         output_dir=output_dir,
-        name=f"{bundle_id}-{collector}.stdout.raw",
-        content=result.stdout,
-        artifact_type="raw-collector-output",
-    )
-    stderr_artifact = persist_raw_artifact(
-        output_dir=output_dir,
-        name=f"{bundle_id}-{collector}.stderr.raw",
-        content=result.stderr,
-        artifact_type="raw-collector-stderr",
+        bundle_id=bundle_id,
+        collector=collector,
     )
     measurements = dict(parser(result.stdout))
 
@@ -77,3 +89,25 @@ def execute_collector_to_evidence(
         version_matrix=version_matrix,
         asset_refs=asset_refs,
     )
+
+
+def _persist_raw_streams(
+    *,
+    result,
+    output_dir: str | Path,
+    bundle_id: str,
+    collector: str,
+) -> tuple[dict[str, str], dict[str, str]]:
+    stdout_artifact = persist_raw_artifact(
+        output_dir=output_dir,
+        name=f"{bundle_id}-{collector}.stdout.raw",
+        content=result.stdout,
+        artifact_type="raw-collector-output",
+    )
+    stderr_artifact = persist_raw_artifact(
+        output_dir=output_dir,
+        name=f"{bundle_id}-{collector}.stderr.raw",
+        content=result.stderr,
+        artifact_type="raw-collector-stderr",
+    )
+    return stdout_artifact, stderr_artifact
