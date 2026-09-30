@@ -93,7 +93,14 @@ def execute_collector_to_evidence(
         content=result.stderr,
         artifact_type="raw-collector-stderr",
     )
-    measurements = dict(parser(result.stdout))
+    try:
+        measurements = dict(parser(result.stdout))
+    except Exception as exc:
+        raise CollectorExecutionError(
+            f"collector output normalization failed: {exc}",
+            result=result,
+            artifacts=(stdout_artifact, stderr_artifact),
+        ) from exc
 
     return build_evidence_bundle(
         bundle_id=bundle_id,
