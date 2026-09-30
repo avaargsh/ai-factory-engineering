@@ -149,6 +149,31 @@ Schema validation establishes the artifact shape; the artifact digest establishe
 content integrity. Production trust/authenticity remains a separate attestation
 concern and is not implied by digest verification alone.
 
+## Acceptance attestation trust boundary
+
+`AcceptanceArtifact.digest` proves content integrity, not producer identity.
+A separate `AcceptanceAttestation` binds the artifact digest to a key identity.
+
+The reference implementation currently uses HMAC-SHA256 for controlled
+integration/lab proofs. The signed message includes:
+
+```text
+apiVersion
+kind
+artifactDigest
+keyId
+algorithm
+```
+
+so rewriting `keyId` or `algorithm` invalidates the signature.
+
+The external contract is published at
+`schemas/acceptance-attestation.schema.json`.
+
+HMAC remains a reference mechanism. Production deployments should replace the
+signer/verifier with an asymmetric KMS/Sigstore/Cosign-backed implementation
+without changing the AcceptanceArtifact boundary.
+
 ## Current status
 
 v0.1 release candidate.
