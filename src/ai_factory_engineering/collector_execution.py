@@ -9,7 +9,12 @@ from .collectors.nccl import parse_nccl_tests, summarize_nccl
 from .collectors.nvlink import parse_nvlink_status
 from .collectors.rdma import normalize_rdma, parse_rdma_counters
 from .evidence import build_evidence_bundle
-from .runner import LocalCommandRunner, Runner, persist_raw_artifact
+from .runner import (
+    CollectorExecutionError,
+    LocalCommandRunner,
+    Runner,
+    persist_raw_artifact,
+)
 
 
 Parser = Callable[[str], Mapping[str, float]]
@@ -50,7 +55,31 @@ def execute_collector_to_evidence(
         raise ValueError(f"unsupported collector: {collector}") from exc
 
     active_runner = runner or LocalCommandRunner()
-    result = active_runner.run(command, timeout_seconds=timeout_seconds)
+    try:
+        result = active_runner.run(
+            command,
+            timeout_seconds=timeout_seconds,
+        )
+    except CollectorExecutionError as exc:
+        if exc.result is None:
+            raise
+        stdout_artifact = persist_raw_artifact(
+            output_dir=output_dir,
+            name=f"{bundle_id}-{collector}.stdout.raw",
+            content=exc.result.stdout,
+            artifact_type="raw-collector-output",
+        )
+        stderr_artifact = persist_raw_artifact(
+            output_dir=output_dir,
+            name=f"{bundle_id}-{collector}.stderr.raw",
+            content=exc.result.stderr,
+            artifact_type="raw-collector-stderr",
+        )
+        raise CollectorExecutionError(
+            str(exc),
+            result=exc.result,
+            artifacts=(stdout_artifact, stderr_artifact),
+        ) from exc
 
     stdout_artifact = persist_raw_artifact(
         output_dir=output_dir,
