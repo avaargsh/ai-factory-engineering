@@ -229,7 +229,7 @@ filled. Fabric is reported as Not Evaluated in that minimum path rather than
 silently passing.
 
 `commission` now emits a content-addressed `acceptance-artifact.json` whose
-evidence references are the SHA-256 checksums of the raw collector stdout.
+evidence references bind the canonical EvidenceBundle plus SHA-256 checksums of raw collector stdout and stderr.
 
 ## Current status
 
