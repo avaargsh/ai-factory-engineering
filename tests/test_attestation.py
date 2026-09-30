@@ -54,3 +54,58 @@ def test_attestation_fails_after_artifact_tamper():
         attestation,
         secret=b"test-only-secret",
     )
+
+
+
+def test_attestation_fails_when_key_identity_is_rewritten():
+    value = artifact()
+    attestation = attest_acceptance_artifact(
+        value,
+        key_id="commissioning-lab",
+        secret=b"test-only-secret",
+    )
+    attestation["keyId"] = "other-lab"
+
+    assert not verify_acceptance_attestation(
+        value,
+        attestation,
+        secret=b"test-only-secret",
+    )
+
+
+def test_attestation_fails_when_algorithm_is_rewritten():
+    value = artifact()
+    attestation = attest_acceptance_artifact(
+        value,
+        key_id="commissioning-lab",
+        secret=b"test-only-secret",
+    )
+    attestation["algorithm"] = "HMAC-SHA512"
+
+    assert not verify_acceptance_attestation(
+        value,
+        attestation,
+        secret=b"test-only-secret",
+    )
+
+
+def test_attestation_can_pin_expected_key_id():
+    value = artifact()
+    attestation = attest_acceptance_artifact(
+        value,
+        key_id="commissioning-lab",
+        secret=b"test-only-secret",
+    )
+
+    assert verify_acceptance_attestation(
+        value,
+        attestation,
+        secret=b"test-only-secret",
+        expected_key_id="commissioning-lab",
+    )
+    assert not verify_acceptance_attestation(
+        value,
+        attestation,
+        secret=b"test-only-secret",
+        expected_key_id="production-factory",
+    )
