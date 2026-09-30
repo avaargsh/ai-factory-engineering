@@ -80,7 +80,8 @@ export AI_FACTORY_ATTESTATION_SECRET='...'
 
 make lab-smoke \
   MANIFEST=/path/to/lab.json \
-  ATTESTATION_KEY_ID=commissioning-lab
+  ATTESTATION_KEY_ID=commissioning-lab \
+  LAB_ARTIFACTS=.artifacts/lab-20260930T160000Z
 ```
 
 Outputs under `.artifacts/lab/` include:
@@ -96,3 +97,15 @@ The command fails closed on collector errors, missing evidence, threshold
 failures, invalid artifact replay, or attestation verification failure.
 
 This is a controlled-lab path, not fleet-scale certification.
+
+
+## Evidence retention
+
+Use a new `LAB_ARTIFACTS` directory for every controlled-lab execution. The
+`lab-smoke` target refuses to reuse an existing path and never removes prior
+lab evidence automatically.
+
+Collector process failures and timeouts remain fail-closed, but any stdout and
+stderr captured before the failure are written to the selected run directory
+before the error is returned. This preserves diagnostic evidence from failed
+hardware/runtime runs instead of retaining only successful runs.
