@@ -29,6 +29,6 @@ def test_live_commissioning_passes_only_after_evidence_evaluation(tmp_path):
     assert len(result.evidence)==2
 
 def test_successful_command_still_fails_gate_when_nccl_misses_baseline(tmp_path):
-    result=run_live_commissioning(tests=tests(120.0),gates=[GateSpec("fabric-gate","fabric",("rdma-health","nccl-collective"))],runner=RoutedRunner(),output_dir=tmp_path,topology_ref="demo")
+    result=run_live_commissioning(tests=live_tests(120.0),gates=[GateSpec("fabric-gate","fabric",("rdma-health","nccl-collective"))],runner=RoutedRunner(),output_dir=tmp_path,topology_ref="demo")
     assert result.gates[0].status == GateStatus.FAIL
     assert "actual=112.35" in result.gates[0].reasons[0]
