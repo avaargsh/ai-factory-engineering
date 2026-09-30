@@ -7,16 +7,23 @@ from pathlib import Path
 from typing import Protocol, Sequence
 
 
-class CollectorExecutionError(RuntimeError):
-    pass
-
-
 @dataclass(frozen=True)
 class CommandResult:
     command: tuple[str, ...]
     returncode: int
     stdout: str
     stderr: str
+
+
+class CollectorExecutionError(RuntimeError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        result: CommandResult | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.result = result
 
 
 class Runner(Protocol):
@@ -26,6 +33,14 @@ class Runner(Protocol):
         *,
         timeout_seconds: float = 60.0,
     ) -> CommandResult: ...
+
+
+def _stream_text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
 
 
 class LocalCommandRunner:
@@ -45,8 +60,30 @@ class LocalCommandRunner:
                 timeout=timeout_seconds,
                 check=False,
             )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise CollectorExecutionError(str(exc)) from exc
+        except subprocess.TimeoutExpired as exc:
+            stdout = _stream_text(exc.stdout)
+            stderr = _stream_text(exc.stderr)
+            result = CommandResult(
+                tuple(command),
+                124,
+                stdout,
+                stderr or str(exc),
+            )
+            raise CollectorExecutionError(
+                f"collector command timed out after {timeout_seconds}s",
+                result=result,
+            ) from exc
+        except OSError as exc:
+            result = CommandResult(
+                tuple(command),
+                -1,
+                "",
+                str(exc),
+            )
+            raise CollectorExecutionError(
+                str(exc),
+                result=result,
+            ) from exc
 
         result = CommandResult(
             tuple(command),
@@ -57,7 +94,8 @@ class LocalCommandRunner:
         if result.returncode != 0:
             raise CollectorExecutionError(
                 f"collector command failed rc={result.returncode}: "
-                f"{result.stderr.strip()}"
+                f"{result.stderr.strip()}",
+                result=result,
             )
         return result
 
