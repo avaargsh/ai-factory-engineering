@@ -22,9 +22,9 @@ smoke:
 lab-smoke:
 	@test -n "$(MANIFEST)" || (echo "MANIFEST=path/to/site.json is required" && exit 2)
 	@test -n "$(ATTESTATION_KEY_ID)" || (echo "ATTESTATION_KEY_ID is required" && exit 2)
-	@test -n "${AI_FACTORY_ATTESTATION_SECRET:-}" || (echo "AI_FACTORY_ATTESTATION_SECRET is required" && exit 2)
-	$(PYTHON) -m ai_factory_engineering.cli validate-lab-manifest "$(MANIFEST)"
+	@test -n "$${AI_FACTORY_ATTESTATION_SECRET:-}" || (echo "AI_FACTORY_ATTESTATION_SECRET is required" && exit 2)
 	@test ! -e "$(LAB_ARTIFACTS)" || (echo "LAB_ARTIFACTS=$(LAB_ARTIFACTS) already exists; choose a new output path to preserve prior evidence" && exit 2)
+	$(PYTHON) -m ai_factory_engineering.cli validate-lab-manifest "$(MANIFEST)"
 	mkdir -p "$(LAB_ARTIFACTS)"
 	$(PYTHON) -m ai_factory_engineering.cli commission "$(MANIFEST)" --output-dir "$(LAB_ARTIFACTS)"
 	$(PYTHON) -m ai_factory_engineering.cli attest "$(LAB_ARTIFACTS)/acceptance-artifact.json" --key-id "$(ATTESTATION_KEY_ID)" --output "$(LAB_ARTIFACTS)/acceptance-attestation.json"
