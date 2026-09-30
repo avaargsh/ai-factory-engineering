@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from dataclasses import asdict
+from pathlib import Path
 
 from .acceptance import (
     load_and_validate_evidence_bundle,
@@ -11,6 +13,10 @@ from .acceptance import (
 from .acceptance_run import (
     evaluate_acceptance_run,
     load_acceptance_run_manifest,
+)
+from .attestation import (
+    attest_acceptance_artifact,
+    verify_acceptance_attestation,
 )
 from .capacity import CapacityInputs, calculate_capacity
 from .collector_execution import execute_collector_to_evidence
@@ -73,6 +79,29 @@ def main() -> None:
     commission.add_argument("manifest")
     commission.add_argument("--output-dir", required=True)
 
+    attest = subparsers.add_parser("attest")
+    attest.add_argument("artifact")
+    attest.add_argument("--key-id", required=True)
+    attest.add_argument("--output", required=True)
+    attest.add_argument(
+        "--secret-env",
+        default="AI_FACTORY_ATTESTATION_SECRET",
+    )
+
+    verify_attestation = subparsers.add_parser(
+        "verify-attestation"
+    )
+    verify_attestation.add_argument("artifact")
+    verify_attestation.add_argument("attestation")
+    verify_attestation.add_argument(
+        "--expected-key-id",
+        required=False,
+    )
+    verify_attestation.add_argument(
+        "--secret-env",
+        default="AI_FACTORY_ATTESTATION_SECRET",
+    )
+
     capacity = subparsers.add_parser("capacity")
     capacity.add_argument("--contract-mw", type=float, required=True)
     capacity.add_argument("--pue", type=float, required=True)
@@ -112,6 +141,63 @@ def main() -> None:
     args = parser.parse_args(raw_argv)
     if args.command == "run-collector":
         args.collector_command = collector_tail
+
+    if args.command in {"attest", "verify-attestation"}:
+        secret_value = os.environ.get(args.secret_env)
+        if not secret_value:
+            raise SystemExit(
+                f"required secret environment variable is not set: {args.secret_env}"
+            )
+        secret = secret_value.encode("utf-8")
+        artifact = json.loads(
+            Path(args.artifact).read_text(encoding="utf-8")
+        )
+
+        if args.command == "attest":
+            attestation = attest_acceptance_artifact(
+                artifact,
+                key_id=args.key_id,
+                secret=secret,
+            )
+            output = Path(args.output)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(
+                json.dumps(attestation, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            print(
+                json.dumps(
+                    {
+                        "artifactDigest": attestation["artifactDigest"],
+                        "keyId": attestation["keyId"],
+                        "algorithm": attestation["algorithm"],
+                        "output": str(output),
+                    },
+                    indent=2,
+                )
+            )
+            return
+
+        attestation = json.loads(
+            Path(args.attestation).read_text(encoding="utf-8")
+        )
+        verified = verify_acceptance_attestation(
+            artifact,
+            attestation,
+            secret=secret,
+            expected_key_id=args.expected_key_id,
+        )
+        print(
+            json.dumps(
+                {
+                    "verified": verified,
+                    "artifactDigest": artifact.get("digest"),
+                    "keyId": attestation.get("keyId"),
+                },
+                indent=2,
+            )
+        )
+        raise SystemExit(0 if verified else 3)
 
     if args.command == "validate-test":
         doc = load_and_validate_test_spec(args.path)
@@ -165,7 +251,6 @@ def main() -> None:
         return
 
     if args.command == "collect":
-        from pathlib import Path
         text = Path(args.input).read_text(encoding="utf-8")
         if args.collector == "dcgm":
             measurements = parse_dcgm_csv(text)
@@ -188,7 +273,6 @@ def main() -> None:
         return
 
     if args.command == "commission":
-        from pathlib import Path
         run_id, topology_ref, gates, tests = load_live_manifest(args.manifest)
         output_dir = Path(args.output_dir); output_dir.mkdir(parents=True, exist_ok=True)
         result = run_live_commissioning(tests=tests, gates=gates, runner=__import__("ai_factory_engineering.runner", fromlist=["LocalCommandRunner"]).LocalCommandRunner(), output_dir=output_dir, topology_ref=topology_ref)
