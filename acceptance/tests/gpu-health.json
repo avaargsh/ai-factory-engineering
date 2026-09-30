@@ -1,0 +1,33 @@
+{
+  "apiVersion": "aifactory.engineering/v1alpha1",
+  "kind": "AcceptanceTest",
+  "metadata": {
+    "id": "gpu-health",
+    "name": "GPU health from normalized vendor telemetry",
+    "layer": "compute"
+  },
+  "spec": {
+    "objective": "Fail commissioning when normalized GPU telemetry reports an uncorrected ECC error.",
+    "metrics": [
+      {
+        "name": "gpu_ecc_uncorrected_total",
+        "op": "eq",
+        "threshold": 0,
+        "unit": "count",
+        "aggregation": "sum"
+      }
+    ],
+    "evidence": [
+      {
+        "source": "raw-collector-output",
+        "required": true,
+        "description": "SHA-256-addressed raw GPU telemetry stdout."
+      }
+    ],
+    "retestOnChange": [
+      "GPU replacement",
+      "driver change",
+      "firmware change"
+    ]
+  }
+}
