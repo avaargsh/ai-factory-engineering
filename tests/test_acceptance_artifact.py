@@ -1,3 +1,5 @@
+import pytest
+
 from ai_factory_engineering.replay import canonical_digest
 from ai_factory_engineering.acceptance_artifact import (
     build_acceptance_artifact,
@@ -113,6 +115,59 @@ def test_rehashed_artifact_rejects_empty_gate_set():
         issued_at="2026-09-29T04:10:00+00:00",
     )
     artifact["gates"] = []
+    _reseal(artifact)
+
+    assert verify_acceptance_artifact(artifact) is False
+
+
+
+def test_build_rejects_inconsistent_decision_before_sealing():
+    inconsistent = CrossLayerAcceptanceDecision(
+        disposition=AcceptanceDisposition.ACCEPT,
+        accepted=True,
+        gates=(
+            GateDecision(
+                "gpu",
+                GateStatus.FAIL,
+                ("dcgm failed",),
+            ),
+        ),
+        reasons=("gpu: dcgm failed",),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="inconsistent or incomplete",
+    ):
+        build_acceptance_artifact(
+            inconsistent,
+            case_id="bad-decision",
+            evidence_refs={"gpu": "evidence://gpu/fail"},
+            issued_at="2026-09-30T10:00:00+00:00",
+        )
+
+
+def test_build_rejects_empty_evidence_refs():
+    with pytest.raises(
+        ValueError,
+        match="inconsistent or incomplete",
+    ):
+        build_acceptance_artifact(
+            decision(),
+            case_id="missing-evidence",
+            evidence_refs={},
+            issued_at="2026-09-30T10:00:00+00:00",
+        )
+
+
+def test_resealed_empty_evidence_refs_remain_invalid():
+    artifact = build_acceptance_artifact(
+        decision(),
+        case_id="golden-factory-576-runtime",
+        evidence_refs={"gpu": "evidence://gpu/dcgm-001"},
+        issued_at="2026-09-29T04:10:00+00:00",
+    )
+    artifact["evidenceRefs"] = {}
     _reseal(artifact)
 
     assert verify_acceptance_artifact(artifact) is False
