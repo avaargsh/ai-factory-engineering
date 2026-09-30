@@ -75,6 +75,8 @@ def render_commissioning_markdown(
         }
         stdout = by_type.get("raw-collector-output", {})
         stderr = by_type.get("raw-collector-stderr", {})
+        if not stdout and len(bundle.get("artifacts", [])) == 1:
+            stdout = bundle["artifacts"][0]
         lines.append(
             f"| {bundle['metadata']['bundleId']} | {bundle['testRef']} | "
             f"{bundle['provenance']['collector']} | "
