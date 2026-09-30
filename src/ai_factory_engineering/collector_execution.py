@@ -11,6 +11,7 @@ from .collectors.rdma import normalize_rdma, parse_rdma_counters
 from .evidence import build_evidence_bundle
 from .runner import (
     CollectorExecutionError,
+    CommandResult,
     LocalCommandRunner,
     Runner,
     persist_raw_artifact,
@@ -93,7 +94,7 @@ def execute_collector_to_evidence(
 
 def _persist_raw_streams(
     *,
-    result,
+    result: CommandResult,
     output_dir: str | Path,
     bundle_id: str,
     collector: str,
