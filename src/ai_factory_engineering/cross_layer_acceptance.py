@@ -45,11 +45,10 @@ def outcome_from_acceptance_result(
     )
 
 
-def decide_cross_layer_acceptance(
-    gates: Iterable[GateSpec],
-    outcomes: Mapping[str, Iterable[TestOutcome]],
+def decision_from_gate_decisions(
+    decisions: Iterable[GateDecision],
 ) -> CrossLayerAcceptanceDecision:
-    decisions = evaluate_plan(gates, outcomes)
+    decisions = tuple(decisions)
     statuses = {decision.status for decision in decisions}
 
     reject_statuses = {
@@ -76,4 +75,13 @@ def decide_cross_layer_acceptance(
         accepted=disposition is AcceptanceDisposition.ACCEPT,
         gates=decisions,
         reasons=reasons,
+    )
+
+
+def decide_cross_layer_acceptance(
+    gates: Iterable[GateSpec],
+    outcomes: Mapping[str, Iterable[TestOutcome]],
+) -> CrossLayerAcceptanceDecision:
+    return decision_from_gate_decisions(
+        evaluate_plan(gates, outcomes)
     )
