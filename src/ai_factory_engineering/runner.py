@@ -67,6 +67,7 @@ def persist_raw_artifact(
     output_dir: str | Path,
     name: str,
     content: str,
+    artifact_type: str = "raw-collector-output",
 ) -> dict[str, str]:
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
@@ -75,7 +76,7 @@ def persist_raw_artifact(
     path.write_bytes(data)
     digest = hashlib.sha256(data).hexdigest()
     return {
-        "type": "raw-collector-output",
+        "type": artifact_type,
         "uri": str(path),
         "checksum": f"sha256:{digest}",
     }
