@@ -35,17 +35,26 @@ def load_outcomes(path: str | Path) -> dict[str, tuple[TestOutcome, ...]]:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     result: dict[str, tuple[TestOutcome, ...]] = {}
     for gate_id, values in data.items():
-        result[gate_id] = tuple(
-            TestOutcome(
-                test_id=item["test_id"],
-                status=GateStatus(item["status"]),
-                evidence_complete=bool(
-                    item.get("evidence_complete", True)
-                ),
-                reason=item.get("reason"),
+        parsed: list[TestOutcome] = []
+        for item in values:
+            evidence_complete = item.get(
+                "evidence_complete",
+                False,
             )
-            for item in values
-        )
+            if not isinstance(evidence_complete, bool):
+                raise ValueError(
+                    "evidence_complete must be a boolean "
+                    f"for test {item.get('test_id')!r}"
+                )
+            parsed.append(
+                TestOutcome(
+                    test_id=item["test_id"],
+                    status=GateStatus(item["status"]),
+                    evidence_complete=evidence_complete,
+                    reason=item.get("reason"),
+                )
+            )
+        result[gate_id] = tuple(parsed)
     return result
 
 
