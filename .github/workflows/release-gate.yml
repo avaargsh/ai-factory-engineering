@@ -1,0 +1,52 @@
+name: release-gate
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/release-gate.yml"
+      - "Makefile"
+      - "pyproject.toml"
+      - "scripts/**"
+      - "src/**"
+      - "tests/**"
+      - "examples/**"
+      - "acceptance/**"
+      - "RELEASE_READINESS.md"
+      - "RELEASE_NOTES.md"
+  workflow_dispatch:
+
+jobs:
+  verify-v0-1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install fresh clone
+        run: make setup
+
+      - name: Run test suite
+        run: make test
+
+      - name: Run deterministic demo
+        run: make demo
+
+      - name: Verify release contract
+        run: make verify-release
+
+      - name: Audit full git history
+        run: make audit-history
+
+      - name: Upload deterministic acceptance artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0.1-release-gate
+          path: .artifacts/
+          if-no-files-found: warn
