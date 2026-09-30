@@ -104,18 +104,18 @@ def test_failed_collector_persists_raw_stdout_and_stderr(tmp_path: Path) -> None
     assert exc.artifacts[1]["checksum"].startswith("sha256:")
 
 def test_parser_failure_keeps_raw_artifacts_attached_to_error(tmp_path: Path) -> None:
-    malformed = "this is not valid rdma counter output\n"
+    malformed = "{not-valid-json}\n"
 
     with pytest.raises(
         CollectorExecutionError,
         match="normalization failed",
     ) as exc_info:
         execute_collector_to_evidence(
-            collector="rdma",
-            command=["rdma-stat"],
+            collector="inference",
+            command=["inference-probe"],
             output_dir=tmp_path,
-            bundle_id="rdma-parse-failed",
-            test_ref="rdma-health",
+            bundle_id="inference-parse-failed",
+            test_ref="inference-slo",
             topology_ref="controlled-lab",
             runner=StubRunner(malformed),
         )
