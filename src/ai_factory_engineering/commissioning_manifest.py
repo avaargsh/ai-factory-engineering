@@ -1,15 +1,112 @@
 from __future__ import annotations
+
 import json
 from pathlib import Path
+
 from .acceptance import load_and_validate_test_spec
 from .commissioning import GateSpec
 from .live_commissioning import LiveTest
 from .typed_baseline import load_typed_baseline
 
+
 def load_live_manifest(path: str | Path):
-    path=Path(path); doc=json.loads(path.read_text(encoding="utf-8")); base=path.parent
-    gates=tuple(GateSpec(g["id"],g["layer"],tuple(g["tests"]),tuple(g.get("dependsOn",())),g.get("failClosed",True)) for g in doc["gates"])
-    tests=[]
+    path = Path(path)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    base = path.parent
+
+    gates = tuple(
+        GateSpec(
+            g["id"],
+            g["layer"],
+            tuple(g["tests"]),
+            tuple(g.get("dependsOn", ())),
+            g.get("failClosed", True),
+        )
+        for g in doc["gates"]
+    )
+
+    global_version_matrix = {
+        str(key): str(value)
+        for key, value in doc.get("versionMatrix", {}).items()
+    }
+    global_asset_refs = tuple(
+        str(value)
+        for value in doc.get("assetRefs", ())
+    )
+    global_collector_version = str(
+        doc.get("collectorVersion", "0.1")
+    )
+    global_timeout = float(
+        doc.get("timeoutSeconds", 60.0)
+    )
+
+    tests = []
     for item in doc["tests"]:
-        tests.append(LiveTest(item["collector"],tuple(item["command"]),load_and_validate_test_spec(base/item["test"]),tuple(load_typed_baseline(base/p) for p in item["baselines"]),item["gateId"],item["bundleId"]))
-    return doc["runId"],doc["topologyRef"],gates,tuple(tests)
+        version_matrix = {
+            **global_version_matrix,
+            **{
+                str(key): str(value)
+                for key, value in item.get("versionMatrix", {}).items()
+            },
+        }
+        asset_refs = (
+            global_asset_refs
+            + tuple(str(value) for value in item.get("assetRefs", ()))
+        )
+        tests.append(
+            LiveTest(
+                collector=item["collector"],
+                command=tuple(item["command"]),
+                test_spec=load_and_validate_test_spec(
+                    base / item["test"]
+                ),
+                baselines=tuple(
+                    load_typed_baseline(base / baseline)
+                    for baseline in item.get("baselines", ())
+                ),
+                gate_id=item["gateId"],
+                bundle_id=item["bundleId"],
+                collector_version=str(
+                    item.get(
+                        "collectorVersion",
+                        global_collector_version,
+                    )
+                ),
+                asset_refs=asset_refs,
+                version_matrix=version_matrix,
+                timeout_seconds=float(
+                    item.get(
+                        "timeoutSeconds",
+                        global_timeout,
+                    )
+                ),
+            )
+        )
+
+    return (
+        doc["runId"],
+        doc["topologyRef"],
+        gates,
+        tuple(tests),
+    )
+
+
+def load_manifest_annotations(
+    path: str | Path,
+) -> dict:
+    """Return reporting-only manifest annotations without changing execution."""
+    doc = json.loads(
+        Path(path).read_text(encoding="utf-8")
+    )
+    not_evaluated = doc.get("notEvaluated", [])
+    if not isinstance(not_evaluated, list):
+        raise ValueError("notEvaluated must be an array")
+    return {
+        "notEvaluated": not_evaluated,
+        "versionMatrix": dict(
+            doc.get("versionMatrix", {})
+        ),
+        "assetRefs": list(
+            doc.get("assetRefs", [])
+        ),
+    }
