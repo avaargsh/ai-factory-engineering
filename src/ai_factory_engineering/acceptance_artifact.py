@@ -34,6 +34,10 @@ def build_acceptance_artifact(
         "reasons": list(decision.reasons),
         "evidenceRefs": dict(sorted(evidence_refs.items())),
     }
+    if not _valid_acceptance_semantics(payload):
+        raise ValueError(
+            "acceptance artifact payload is inconsistent or incomplete"
+        )
     return {
         **payload,
         "digest": canonical_digest(payload),
@@ -88,7 +92,7 @@ def _valid_acceptance_semantics(artifact: Mapping[str, Any]) -> bool:
         return False
 
     evidence_refs = artifact.get("evidenceRefs")
-    if not isinstance(evidence_refs, Mapping):
+    if not isinstance(evidence_refs, Mapping) or not evidence_refs:
         return False
     if not all(
         isinstance(key, str)
