@@ -1,0 +1,48 @@
+{
+  "apiVersion": "aifactory.engineering/v1alpha1",
+  "kind": "AcceptanceTest",
+  "metadata": {
+    "id": "inference-slo",
+    "name": "Inference workload SLO",
+    "layer": "runtime"
+  },
+  "spec": {
+    "objective": "Evaluate TTFT P95, TPOT P95 and request success ratio against explicitly bound site/workload baselines.",
+    "metrics": [
+      {
+        "name": "ttft_p95_ms",
+        "op": "lte",
+        "threshold": 0,
+        "unit": "ms",
+        "aggregation": "p95"
+      },
+      {
+        "name": "tpot_p95_ms",
+        "op": "lte",
+        "threshold": 0,
+        "unit": "ms/token",
+        "aggregation": "p95"
+      },
+      {
+        "name": "success_ratio",
+        "op": "gte",
+        "threshold": 1.01,
+        "unit": "ratio",
+        "aggregation": "rate"
+      }
+    ],
+    "evidence": [
+      {
+        "source": "raw-collector-output",
+        "required": true,
+        "description": "SHA-256-addressed raw benchmark summary JSON."
+      }
+    ],
+    "retestOnChange": [
+      "model change",
+      "runtime change",
+      "GPU topology change",
+      "load-profile change"
+    ]
+  }
+}
