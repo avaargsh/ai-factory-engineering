@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/avaargsh/ai-factory-engineering/schemas/acceptance-artifact.schema.json",
+  "title": "AI Factory AcceptanceArtifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "caseId",
+    "issuedAt",
+    "disposition",
+    "accepted",
+    "gates",
+    "reasons",
+    "evidenceRefs",
+    "digest"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "aifactory.engineering/v1alpha1"
+    },
+    "kind": {
+      "const": "AcceptanceArtifact"
+    },
+    "caseId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "disposition": {
+      "enum": ["ACCEPT", "HOLD", "REJECT"]
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gateId", "status", "reasons"],
+        "properties": {
+          "gateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": ["PENDING", "PASS", "WARN", "FAIL", "ERROR", "BLOCKED"]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "evidenceRefs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disposition": {"const": "ACCEPT"}
+        },
+        "required": ["disposition"]
+      },
+      "then": {
+        "properties": {
+          "accepted": {"const": true}
+        }
+      },
+      "else": {
+        "properties": {
+          "accepted": {"const": false}
+        }
+      }
+    }
+  ]
+}
