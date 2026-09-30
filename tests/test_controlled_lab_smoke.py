@@ -189,8 +189,12 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
     assert artifact["accepted"] is True
     assert verify_acceptance_artifact(artifact)
     assert set(artifact["evidenceRefs"]) == {
-        "gpu-live",
-        "inference-live",
+        "gpu-live.bundle",
+        "gpu-live.raw-collector-output",
+        "gpu-live.raw-collector-stderr",
+        "inference-live.bundle",
+        "inference-live.raw-collector-output",
+        "inference-live.raw-collector-stderr",
     }
     assert all(
         value.startswith("sha256:")
