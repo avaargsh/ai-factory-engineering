@@ -200,6 +200,37 @@ the artifact digest, key identity, algorithm and signature.
 This remains the HMAC reference path for controlled integration. Production
 signing should use an asymmetric KMS/Sigstore/Cosign-backed verifier.
 
+## Controlled-lab handoff
+
+The smallest real-hardware path is now intentionally narrow:
+
+```text
+GPU telemetry -> Compute Gate
+Inference JSON summary -> Runtime Gate
+             -> AcceptanceArtifact
+             -> AcceptanceAttestation
+```
+
+Use:
+
+```bash
+ai-factory validate-lab-manifest /path/to/lab.json
+
+export AI_FACTORY_ATTESTATION_SECRET='...'
+make lab-smoke \
+  MANIFEST=/path/to/lab.json \
+  ATTESTATION_KEY_ID=commissioning-lab
+```
+
+The template at
+`acceptance/examples/controlled-lab-minimum.template.json` is fail-closed until
+site identity, versions, assets, commands and SLO baselines are explicitly
+filled. Fabric is reported as Not Evaluated in that minimum path rather than
+silently passing.
+
+`commission` now emits a content-addressed `acceptance-artifact.json` whose
+evidence references are the SHA-256 checksums of the raw collector stdout.
+
 ## Current status
 
 v0.1 release candidate.
