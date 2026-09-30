@@ -124,6 +124,31 @@ casebook/                     reference engineering cases
 docs/                         architecture and AI Factory engineering notes
 ```
 
+## External acceptance contract
+
+`AcceptanceArtifact` is the portable output boundary for consumers outside this
+repository. Its JSON contract is published at
+`schemas/acceptance-artifact.schema.json`.
+
+External control planes should consume the sealed artifact rather than re-run
+AI Factory threshold logic:
+
+```text
+raw evidence
+  -> AI Factory Gate DAG
+  -> AcceptanceArtifact
+       + caseId
+       + disposition / accepted
+       + per-gate status
+       + evidenceRefs
+       + content digest
+  -> external evidence binding
+```
+
+Schema validation establishes the artifact shape; the artifact digest establishes
+content integrity. Production trust/authenticity remains a separate attestation
+concern and is not implied by digest verification alone.
+
 ## Current status
 
 v0.1 release candidate.
