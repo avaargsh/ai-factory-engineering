@@ -1,9 +1,14 @@
+import sys
+import pytest
 from pathlib import Path
 
 from ai_factory_engineering.collector_execution import (
     execute_collector_to_evidence,
 )
-from ai_factory_engineering.runner import CommandResult
+from ai_factory_engineering.runner import (
+    CollectorExecutionError,
+    CommandResult,
+)
 
 
 class StubRunner:
@@ -58,3 +63,62 @@ def test_execute_rdma_collector_normalizes_measurements(tmp_path: Path) -> None:
 
     assert bundle["measurements"]["rdma_tx_discards"] == 0
     assert bundle["measurements"]["roce_cnp_sent"] == 3
+
+
+
+def test_failed_native_collector_retains_stdout_and_stderr(tmp_path: Path) -> None:
+    with pytest.raises(CollectorExecutionError):
+        execute_collector_to_evidence(
+            collector="gpu_csv",
+            command=[
+                sys.executable,
+                "-c",
+                (
+                    "import sys; "
+                    "print('partial-gpu-output', flush=True); "
+                    "print('driver diagnostic', file=sys.stderr, flush=True); "
+                    "raise SystemExit(9)"
+                ),
+            ],
+            output_dir=tmp_path,
+            bundle_id="gpu-failed",
+            test_ref="gpu-health",
+            topology_ref="lab://node-1",
+            timeout_seconds=5.0,
+        )
+
+    assert (
+        tmp_path / "gpu-failed-gpu_csv.stdout.raw"
+    ).read_text(encoding="utf-8") == "partial-gpu-output\n"
+    assert (
+        tmp_path / "gpu-failed-gpu_csv.stderr.raw"
+    ).read_text(encoding="utf-8") == "driver diagnostic\n"
+
+
+def test_timed_out_collector_retains_partial_streams(tmp_path: Path) -> None:
+    with pytest.raises(CollectorExecutionError):
+        execute_collector_to_evidence(
+            collector="inference",
+            command=[
+                sys.executable,
+                "-c",
+                (
+                    "import sys,time; "
+                    "print('partial-summary', flush=True); "
+                    "print('benchmark still running', file=sys.stderr, flush=True); "
+                    "time.sleep(5)"
+                ),
+            ],
+            output_dir=tmp_path,
+            bundle_id="inference-timeout",
+            test_ref="inference-slo",
+            topology_ref="lab://node-1",
+            timeout_seconds=0.25,
+        )
+
+    assert "partial-summary" in (
+        tmp_path / "inference-timeout-inference.stdout.raw"
+    ).read_text(encoding="utf-8")
+    assert "benchmark still running" in (
+        tmp_path / "inference-timeout-inference.stderr.raw"
+    ).read_text(encoding="utf-8")
