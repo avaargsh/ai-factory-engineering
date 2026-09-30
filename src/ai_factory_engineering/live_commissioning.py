@@ -34,7 +34,11 @@ class LiveCommissioningResult:
 def run_live_commissioning(*, tests: Sequence[LiveTest], gates: Sequence[GateSpec], runner: Runner, output_dir: str | Path, topology_ref: str) -> LiveCommissioningResult:
     evidence=[]; acceptance=[]; outcomes=[]; by_gate: dict[str,list[TestOutcome]]={}
     for test in tests:
-        executable = bind_typed_baselines(test.test_spec, test.baselines)
+        executable = (
+            bind_typed_baselines(test.test_spec, test.baselines)
+            if test.baselines
+            else test.test_spec
+        )
         bundle = execute_collector_to_evidence(collector=test.collector, command=test.command, output_dir=output_dir, bundle_id=test.bundle_id, test_ref=executable["metadata"]["id"], topology_ref=topology_ref, runner=runner)
         result = evaluate_acceptance(executable, bundle)
         outcome = acceptance_result_to_outcome(result)
