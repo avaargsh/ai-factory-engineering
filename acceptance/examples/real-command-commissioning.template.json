@@ -1,42 +1,67 @@
 {
-  "runId": "site-commissioning-001",
-  "topologyRef": "CHANGE-ME://site/rack-or-cell",
+  "runId": "CHANGE-ME-controlled-lab-001",
+  "topologyRef": "CHANGE-ME://lab/cell-or-node",
+  "versionMatrix": {
+    "gpu": "CHANGE-ME",
+    "driver": "CHANGE-ME",
+    "cuda": "CHANGE-ME",
+    "runtime": "CHANGE-ME",
+    "model": "CHANGE-ME",
+    "benchmark": "CHANGE-ME"
+  },
+  "assetRefs": [
+    "CHANGE-ME://asset/gpu-node"
+  ],
+  "collectorVersion": "0.1",
+  "timeoutSeconds": 300,
+  "notEvaluated": [
+    {
+      "layer": "fabric",
+      "reason": "Minimum controlled-lab template: add live RDMA/NCCL tests when the lab supports multi-node fabric validation."
+    }
+  ],
   "gates": [
-    {"id": "compute", "layer": "compute", "tests": ["dcgm-health", "nvlink-bandwidth"], "failClosed": true},
-    {"id": "fabric", "layer": "fabric", "tests": ["rdma-health", "nccl-collective"], "dependsOn": ["compute"], "failClosed": true}
+    {
+      "id": "compute",
+      "layer": "compute",
+      "tests": ["gpu-health"],
+      "failClosed": true
+    },
+    {
+      "id": "runtime",
+      "layer": "runtime",
+      "tests": ["inference-slo"],
+      "dependsOn": ["compute"],
+      "failClosed": true
+    }
   ],
   "tests": [
     {
-      "collector": "dcgm",
-      "command": ["dcgmi", "diag", "-r", "1"],
-      "test": "../tests/dcgm-health.json",
+      "collector": "gpu_csv",
+      "command": [
+        "bash",
+        "-lc",
+        "printf 'gpu_id,gpu_temp,power_w,sm_clock_mhz,ecc_uncorrected\\n'; nvidia-smi --query-gpu=index,temperature.gpu,power.draw,clocks.sm,ecc.errors.uncorrected.volatile.total --format=csv,noheader,nounits"
+      ],
+      "test": "../tests/gpu-health.json",
       "baselines": [],
       "gateId": "compute",
-      "bundleId": "dcgm-site"
+      "bundleId": "gpu-health-live"
     },
     {
-      "collector": "nvlink",
-      "command": ["nvidia-smi", "nvlink", "-s"],
-      "test": "../tests/nvlink-bandwidth.json",
-      "baselines": [],
-      "gateId": "compute",
-      "bundleId": "nvlink-site"
-    },
-    {
-      "collector": "rdma",
-      "command": ["CHANGE-ME-rdma-command"],
-      "test": "../tests/rdma-health.json",
-      "baselines": ["../../tests/fixtures/baselines/rdma-tx.json", "../../tests/fixtures/baselines/rdma-rx.json"],
-      "gateId": "fabric",
-      "bundleId": "rdma-site"
-    },
-    {
-      "collector": "nccl",
-      "command": ["CHANGE-ME-nccl-tests-command"],
-      "test": "../tests/nccl-collective.json",
-      "baselines": ["../../tests/fixtures/baselines/nccl.json", "../../tests/fixtures/baselines/nccl-correctness.json"],
-      "gateId": "fabric",
-      "bundleId": "nccl-site"
+      "collector": "inference",
+      "command": [
+        "CHANGE-ME-inference-benchmark-wrapper",
+        "--json-summary"
+      ],
+      "test": "../tests/inference-slo.json",
+      "baselines": [
+        "controlled-lab-baselines/ttft-p95.template.json",
+        "controlled-lab-baselines/tpot-p95.template.json",
+        "controlled-lab-baselines/success-ratio.template.json"
+      ],
+      "gateId": "runtime",
+      "bundleId": "inference-slo-live"
     }
   ]
 }
