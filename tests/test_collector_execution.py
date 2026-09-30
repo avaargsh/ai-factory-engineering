@@ -3,7 +3,12 @@ from pathlib import Path
 from ai_factory_engineering.collector_execution import (
     execute_collector_to_evidence,
 )
-from ai_factory_engineering.runner import CommandResult
+import pytest
+
+from ai_factory_engineering.runner import (
+    CollectorExecutionError,
+    CommandResult,
+)
 
 
 class StubRunner:
@@ -58,3 +63,42 @@ def test_execute_rdma_collector_normalizes_measurements(tmp_path: Path) -> None:
 
     assert bundle["measurements"]["rdma_tx_discards"] == 0
     assert bundle["measurements"]["roce_cnp_sent"] == 3
+
+
+
+class FailingRunner:
+    def run(self, command, *, timeout_seconds=60.0):
+        raise CollectorExecutionError(
+            "collector command failed rc=9",
+            result=CommandResult(
+                tuple(command),
+                9,
+                "partial stdout\n",
+                "diagnostic stderr\n",
+            ),
+        )
+
+
+def test_failed_collector_persists_raw_stdout_and_stderr(tmp_path: Path) -> None:
+    with pytest.raises(CollectorExecutionError) as exc_info:
+        execute_collector_to_evidence(
+            collector="rdma",
+            command=["rdma-stat"],
+            output_dir=tmp_path,
+            bundle_id="rdma-failed",
+            test_ref="rdma-health",
+            topology_ref="controlled-lab",
+            runner=FailingRunner(),
+        )
+
+    exc = exc_info.value
+    assert exc.result is not None
+    assert exc.result.returncode == 9
+    assert len(exc.artifacts) == 2
+
+    stdout_path = tmp_path / "rdma-failed-rdma.stdout.raw"
+    stderr_path = tmp_path / "rdma-failed-rdma.stderr.raw"
+    assert stdout_path.read_text() == "partial stdout\n"
+    assert stderr_path.read_text() == "diagnostic stderr\n"
+    assert exc.artifacts[0]["checksum"].startswith("sha256:")
+    assert exc.artifacts[1]["checksum"].startswith("sha256:")
