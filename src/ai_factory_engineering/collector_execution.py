@@ -52,10 +52,17 @@ def execute_collector_to_evidence(
     active_runner = runner or LocalCommandRunner()
     result = active_runner.run(command, timeout_seconds=timeout_seconds)
 
-    artifact = persist_raw_artifact(
+    stdout_artifact = persist_raw_artifact(
         output_dir=output_dir,
-        name=f"{bundle_id}-{collector}.raw",
+        name=f"{bundle_id}-{collector}.stdout.raw",
         content=result.stdout,
+        artifact_type="raw-collector-output",
+    )
+    stderr_artifact = persist_raw_artifact(
+        output_dir=output_dir,
+        name=f"{bundle_id}-{collector}.stderr.raw",
+        content=result.stderr,
+        artifact_type="raw-collector-stderr",
     )
     measurements = dict(parser(result.stdout))
 
@@ -66,7 +73,7 @@ def execute_collector_to_evidence(
         collector=collector,
         collector_version=collector_version,
         measurements=measurements,
-        artifacts=[artifact],
+        artifacts=[stdout_artifact, stderr_artifact],
         version_matrix=version_matrix,
         asset_refs=asset_refs,
     )
