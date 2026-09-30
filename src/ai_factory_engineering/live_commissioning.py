@@ -21,6 +21,10 @@ class LiveTest:
     baselines: tuple[TypedBaseline, ...]
     gate_id: str
     bundle_id: str
+    collector_version: str = "0.1"
+    asset_refs: tuple[str, ...] = ()
+    version_matrix: Mapping[str, str] | None = None
+    timeout_seconds: float = 60.0
 
 
 @dataclass(frozen=True)
