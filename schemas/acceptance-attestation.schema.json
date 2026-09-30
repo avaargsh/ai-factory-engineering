@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/avaargsh/ai-factory-engineering/schemas/acceptance-attestation.schema.json",
+  "title": "AI Factory AcceptanceAttestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "artifactDigest",
+    "keyId",
+    "algorithm",
+    "signature"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "aifactory.engineering/v1alpha1"
+    },
+    "kind": {
+      "const": "AcceptanceAttestation"
+    },
+    "artifactDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "keyId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "algorithm": {
+      "const": "HMAC-SHA256"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
