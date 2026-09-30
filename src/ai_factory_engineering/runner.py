@@ -8,7 +8,16 @@ from typing import Protocol, Sequence
 
 
 class CollectorExecutionError(RuntimeError):
-    pass
+    def __init__(
+        self,
+        message: str,
+        *,
+        result: "CommandResult | None" = None,
+        artifacts: tuple[dict[str, str], ...] = (),
+    ) -> None:
+        super().__init__(message)
+        self.result = result
+        self.artifacts = artifacts
 
 
 @dataclass(frozen=True)
@@ -45,7 +54,24 @@ class LocalCommandRunner:
                 timeout=timeout_seconds,
                 check=False,
             )
-        except (OSError, subprocess.TimeoutExpired) as exc:
+        except subprocess.TimeoutExpired as exc:
+            stdout = exc.stdout or ""
+            stderr = exc.stderr or ""
+            if isinstance(stdout, bytes):
+                stdout = stdout.decode("utf-8", errors="replace")
+            if isinstance(stderr, bytes):
+                stderr = stderr.decode("utf-8", errors="replace")
+            result = CommandResult(
+                tuple(command),
+                -1,
+                stdout,
+                stderr,
+            )
+            raise CollectorExecutionError(
+                f"collector command timed out after {timeout_seconds}s",
+                result=result,
+            ) from exc
+        except OSError as exc:
             raise CollectorExecutionError(str(exc)) from exc
 
         result = CommandResult(
@@ -57,7 +83,8 @@ class LocalCommandRunner:
         if result.returncode != 0:
             raise CollectorExecutionError(
                 f"collector command failed rc={result.returncode}: "
-                f"{result.stderr.strip()}"
+                f"{result.stderr.strip()}",
+                result=result,
             )
         return result
 
