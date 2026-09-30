@@ -1,0 +1,9 @@
+{
+  "id": "CHANGE-ME-TPOT-P95",
+  "metric": "tpot_p95_ms",
+  "operator": "lte",
+  "value": 0,
+  "unit": "ms/token",
+  "scope": "CHANGE-ME workload and concurrency",
+  "source": "FAIL-CLOSED PLACEHOLDER: replace with approved site/workload SLO"
+}

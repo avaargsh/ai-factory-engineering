@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from .baseline_binding import bind_typed_baselines
 from .collector_execution import execute_collector_to_evidence
@@ -21,6 +21,10 @@ class LiveTest:
     baselines: tuple[TypedBaseline, ...]
     gate_id: str
     bundle_id: str
+    collector_version: str = "0.1"
+    asset_refs: tuple[str, ...] = ()
+    version_matrix: Mapping[str, str] | None = None
+    timeout_seconds: float = 60.0
 
 
 @dataclass(frozen=True)
@@ -34,8 +38,24 @@ class LiveCommissioningResult:
 def run_live_commissioning(*, tests: Sequence[LiveTest], gates: Sequence[GateSpec], runner: Runner, output_dir: str | Path, topology_ref: str) -> LiveCommissioningResult:
     evidence=[]; acceptance=[]; outcomes=[]; by_gate: dict[str,list[TestOutcome]]={}
     for test in tests:
-        executable = bind_typed_baselines(test.test_spec, test.baselines)
-        bundle = execute_collector_to_evidence(collector=test.collector, command=test.command, output_dir=output_dir, bundle_id=test.bundle_id, test_ref=executable["metadata"]["id"], topology_ref=topology_ref, runner=runner)
+        executable = (
+            bind_typed_baselines(test.test_spec, test.baselines)
+            if test.baselines
+            else test.test_spec
+        )
+        bundle = execute_collector_to_evidence(
+            collector=test.collector,
+            command=test.command,
+            output_dir=output_dir,
+            bundle_id=test.bundle_id,
+            test_ref=executable["metadata"]["id"],
+            topology_ref=topology_ref,
+            collector_version=test.collector_version,
+            asset_refs=list(test.asset_refs),
+            version_matrix=test.version_matrix,
+            runner=runner,
+            timeout_seconds=test.timeout_seconds,
+        )
         result = evaluate_acceptance(executable, bundle)
         outcome = acceptance_result_to_outcome(result)
         evidence.append(bundle); acceptance.append(result); outcomes.append(outcome)

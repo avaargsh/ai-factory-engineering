@@ -1,0 +1,9 @@
+{
+  "id": "CHANGE-ME-SUCCESS-RATIO",
+  "metric": "success_ratio",
+  "operator": "gte",
+  "value": 1.01,
+  "unit": "ratio",
+  "scope": "CHANGE-ME workload and concurrency",
+  "source": "FAIL-CLOSED PLACEHOLDER: replace with approved site/workload SLO"
+}

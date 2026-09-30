@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
 from .collectors.dcgm import parse_dcgm_csv
+from .collectors.inference import parse_inference_json
 from .collectors.nccl import parse_nccl_tests, summarize_nccl
 from .collectors.nvlink import parse_nvlink_status
 from .collectors.rdma import normalize_rdma, parse_rdma_counters
@@ -20,6 +21,8 @@ def _parse_nccl(text: str) -> Mapping[str, float]:
 
 PARSERS: dict[str, Parser] = {
     "dcgm": parse_dcgm_csv,
+    "gpu_csv": parse_dcgm_csv,
+    "inference": parse_inference_json,
     "nvlink": parse_nvlink_status,
     "rdma": lambda text: normalize_rdma(parse_rdma_counters(text)),
     "nccl": _parse_nccl,
@@ -36,6 +39,7 @@ def execute_collector_to_evidence(
     topology_ref: str,
     collector_version: str = "0.1",
     asset_refs: list[str] | None = None,
+    version_matrix: Mapping[str, str] | None = None,
     runner: Runner | None = None,
     timeout_seconds: float = 60.0,
 ) -> dict:
@@ -48,10 +52,17 @@ def execute_collector_to_evidence(
     active_runner = runner or LocalCommandRunner()
     result = active_runner.run(command, timeout_seconds=timeout_seconds)
 
-    artifact = persist_raw_artifact(
+    stdout_artifact = persist_raw_artifact(
         output_dir=output_dir,
-        name=f"{bundle_id}-{collector}.raw",
+        name=f"{bundle_id}-{collector}.stdout.raw",
         content=result.stdout,
+        artifact_type="raw-collector-output",
+    )
+    stderr_artifact = persist_raw_artifact(
+        output_dir=output_dir,
+        name=f"{bundle_id}-{collector}.stderr.raw",
+        content=result.stderr,
+        artifact_type="raw-collector-stderr",
     )
     measurements = dict(parser(result.stdout))
 
@@ -62,6 +73,7 @@ def execute_collector_to_evidence(
         collector=collector,
         collector_version=collector_version,
         measurements=measurements,
-        artifacts=[artifact],
+        artifacts=[stdout_artifact, stderr_artifact],
+        version_matrix=version_matrix,
         asset_refs=asset_refs,
     )
