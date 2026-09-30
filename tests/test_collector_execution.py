@@ -34,10 +34,13 @@ def test_execute_nccl_collector_persists_raw_artifact_and_evidence(tmp_path: Pat
     assert bundle["measurements"]["nccl_busbw_gbps"] == 112.35
     assert bundle["provenance"]["collector"] == "nccl"
 
-    artifact = bundle["artifacts"][0]
-    assert artifact["type"] == "raw-collector-output"
-    assert artifact["checksum"].startswith("sha256:")
-    assert Path(artifact["uri"]).read_text() == raw
+    stdout_artifact, stderr_artifact = bundle["artifacts"]
+    assert stdout_artifact["type"] == "raw-collector-output"
+    assert stdout_artifact["checksum"].startswith("sha256:")
+    assert Path(stdout_artifact["uri"]).read_text() == raw
+    assert stderr_artifact["type"] == "raw-collector-stderr"
+    assert stderr_artifact["checksum"].startswith("sha256:")
+    assert Path(stderr_artifact["uri"]).read_text() == ""
 
 
 def test_execute_rdma_collector_normalizes_measurements(tmp_path: Path) -> None:
