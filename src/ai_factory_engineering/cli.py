@@ -391,6 +391,7 @@ def main() -> None:
             run_id,
             topology_ref,
             result,
+            annotations=annotations,
         )
         (output_dir / "commissioning-report.md").write_text(
             report,
