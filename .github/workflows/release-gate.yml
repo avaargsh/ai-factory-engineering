@@ -1,6 +1,8 @@
 name: release-gate
 
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - ".github/workflows/release-gate.yml"
@@ -15,6 +17,9 @@ on:
       - "RELEASE_NOTES.md"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   verify-v0-1:
     runs-on: ubuntu-latest
@@ -27,6 +32,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Record exact revision
+        run: |
+          mkdir -p .artifacts
+          git rev-parse HEAD > .artifacts/revision.txt
 
       - name: Install fresh clone
         run: make setup
