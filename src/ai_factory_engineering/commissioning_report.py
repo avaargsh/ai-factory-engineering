@@ -29,11 +29,35 @@ def commissioning_run_document(
     return document
 
 
-def render_commissioning_markdown(run_id: str, topology_ref: str, result: LiveCommissioningResult) -> str:
-    doc=commissioning_run_document(run_id, topology_ref, result)
+def render_commissioning_markdown(
+    run_id: str,
+    topology_ref: str,
+    result: LiveCommissioningResult,
+    *,
+    annotations: dict[str, Any] | None = None,
+) -> str:
+    doc=commissioning_run_document(
+        run_id,
+        topology_ref,
+        result,
+        annotations=annotations,
+    )
     lines=[f"# Commissioning Run — {run_id}","",f"**Topology:** {topology_ref}",f"**Result:** {doc['status']}","","## Gates","","| Gate | Result | Reason |","| --- | :---: | --- |"]
     for gate in result.gates:
         lines.append(f"| {gate.gate_id} | {gate.status.value} | {'; '.join(gate.reasons) or '-'} |")
+    not_evaluated = (annotations or {}).get("notEvaluated", [])
+    if not_evaluated:
+        lines += [
+            "",
+            "## Not Evaluated",
+            "",
+            "| Layer | Reason |",
+            "| --- | --- |",
+        ]
+        for item in not_evaluated:
+            lines.append(
+                f"| {item.get('layer', '-')} | {item.get('reason', '-')} |"
+            )
     lines += ["","## Acceptance Tests","","| Test | Bundle | Result |","| --- | --- | :---: |"]
     for item in result.acceptance:
         lines.append(f"| {item.test_id} | {item.bundle_id} | {'PASS' if item.passed else 'FAIL'} |")
