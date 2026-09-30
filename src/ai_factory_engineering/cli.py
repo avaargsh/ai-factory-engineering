@@ -6,6 +6,10 @@ import os
 from dataclasses import asdict
 from pathlib import Path
 
+from .acceptance_artifact import (
+    build_acceptance_artifact,
+    verify_acceptance_artifact,
+)
 from .acceptance import (
     load_and_validate_evidence_bundle,
     load_and_validate_test_spec,
@@ -31,9 +35,13 @@ from .run_report import render_acceptance_run_markdown
 from .timeseries import TimeSeriesInputs, evaluate_time_series
 from .timeseries_csv import load_time_slices_csv
 from .recovery_cli import add_recovery_parser, run_recovery_cli
-from .commissioning_manifest import load_live_manifest
+from .commissioning_manifest import (
+    load_live_manifest,
+    load_manifest_annotations,
+)
 from .live_commissioning import run_live_commissioning
 from .commissioning_report import commissioning_run_document, render_commissioning_markdown
+from .cross_layer_acceptance import decision_from_gate_decisions
 
 
 def main() -> None:
@@ -57,7 +65,10 @@ def main() -> None:
     evaluate_run.add_argument("manifest")
 
     collect = subparsers.add_parser("collect")
-    collect.add_argument("collector", choices=["dcgm", "nvlink", "rdma", "nccl"])
+    collect.add_argument(
+        "collector",
+        choices=["dcgm", "gpu_csv", "inference", "nvlink", "rdma", "nccl"],
+    )
     collect.add_argument("input")
     collect.add_argument("--bundle-id", required=True)
     collect.add_argument("--test-ref", required=True)
@@ -66,7 +77,10 @@ def main() -> None:
     collect.add_argument("--asset-ref", action="append", default=[])
 
     run_collector = subparsers.add_parser("run-collector")
-    run_collector.add_argument("collector", choices=["dcgm", "nvlink", "rdma", "nccl"])
+    run_collector.add_argument(
+        "collector",
+        choices=["dcgm", "gpu_csv", "inference", "nvlink", "rdma", "nccl"],
+    )
     run_collector.add_argument("--output-dir", required=True)
     run_collector.add_argument("--bundle-id", required=True)
     run_collector.add_argument("--test-ref", required=True)
@@ -252,8 +266,11 @@ def main() -> None:
 
     if args.command == "collect":
         text = Path(args.input).read_text(encoding="utf-8")
-        if args.collector == "dcgm":
+        if args.collector in {"dcgm", "gpu_csv"}:
             measurements = parse_dcgm_csv(text)
+        elif args.collector == "inference":
+            from .collectors.inference import parse_inference_json
+            measurements = parse_inference_json(text)
         elif args.collector == "nvlink":
             measurements = parse_nvlink_status(text)
         elif args.collector == "rdma":
@@ -273,14 +290,107 @@ def main() -> None:
         return
 
     if args.command == "commission":
-        run_id, topology_ref, gates, tests = load_live_manifest(args.manifest)
-        output_dir = Path(args.output_dir); output_dir.mkdir(parents=True, exist_ok=True)
-        result = run_live_commissioning(tests=tests, gates=gates, runner=__import__("ai_factory_engineering.runner", fromlist=["LocalCommandRunner"]).LocalCommandRunner(), output_dir=output_dir, topology_ref=topology_ref)
-        document = commissioning_run_document(run_id, topology_ref, result)
-        (output_dir / "commissioning-run.json").write_text(json.dumps(document, indent=2, default=str) + "\n", encoding="utf-8")
-        (output_dir / "commissioning-report.md").write_text(render_commissioning_markdown(run_id, topology_ref, result), encoding="utf-8")
-        print(render_commissioning_markdown(run_id, topology_ref, result), end="")
-        raise SystemExit(0 if document["status"] == "PASS" else 2)
+        run_id, topology_ref, gates, tests = load_live_manifest(
+            args.manifest
+        )
+        annotations = load_manifest_annotations(
+            args.manifest
+        )
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        result = run_live_commissioning(
+            tests=tests,
+            gates=gates,
+            runner=__import__(
+                "ai_factory_engineering.runner",
+                fromlist=["LocalCommandRunner"],
+            ).LocalCommandRunner(),
+            output_dir=output_dir,
+            topology_ref=topology_ref,
+        )
+
+        decision = decision_from_gate_decisions(
+            result.gates
+        )
+        evidence_refs = {}
+        for bundle in result.evidence:
+            bundle_id = bundle["metadata"]["bundleId"]
+            artifacts = bundle.get("artifacts", [])
+            if not artifacts:
+                raise SystemExit(
+                    f"missing raw artifact for evidence bundle: {bundle_id}"
+                )
+            checksum = artifacts[0].get("checksum")
+            if not isinstance(checksum, str) or not checksum.startswith("sha256:"):
+                raise SystemExit(
+                    f"missing raw artifact checksum for evidence bundle: {bundle_id}"
+                )
+            evidence_refs[bundle_id] = checksum
+
+        acceptance_artifact = build_acceptance_artifact(
+            decision,
+            case_id=run_id,
+            evidence_refs=evidence_refs,
+        )
+        if not verify_acceptance_artifact(
+            acceptance_artifact
+        ):
+            raise SystemExit(
+                "generated AcceptanceArtifact failed replay verification"
+            )
+        acceptance_path = (
+            output_dir
+            / "acceptance-artifact.json"
+        )
+        acceptance_path.write_text(
+            json.dumps(
+                acceptance_artifact,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        document = commissioning_run_document(
+            run_id,
+            topology_ref,
+            result,
+            annotations=annotations,
+            acceptance_artifact_digest=(
+                acceptance_artifact["digest"]
+            ),
+        )
+        (output_dir / "commissioning-run.json").write_text(
+            json.dumps(
+                document,
+                indent=2,
+                default=str,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        report = render_commissioning_markdown(
+            run_id,
+            topology_ref,
+            result,
+        )
+        (output_dir / "commissioning-report.md").write_text(
+            report,
+            encoding="utf-8",
+        )
+        print(report, end="")
+        print(
+            f"AcceptanceArtifact: {acceptance_path} "
+            f"({acceptance_artifact['digest']})"
+        )
+        raise SystemExit(
+            0
+            if acceptance_artifact["accepted"]
+            else 2
+        )
 
     if args.command == "recovery":
         raise SystemExit(run_recovery_cli(args))
