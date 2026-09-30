@@ -1,0 +1,9 @@
+{
+  "id": "CHANGE-ME-TTFT-P95",
+  "metric": "ttft_p95_ms",
+  "operator": "lte",
+  "value": 0,
+  "unit": "ms",
+  "scope": "CHANGE-ME workload and concurrency",
+  "source": "FAIL-CLOSED PLACEHOLDER: replace with approved site/workload SLO"
+}
