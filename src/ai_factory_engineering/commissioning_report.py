@@ -61,8 +61,23 @@ def render_commissioning_markdown(
     lines += ["","## Acceptance Tests","","| Test | Bundle | Result |","| --- | --- | :---: |"]
     for item in result.acceptance:
         lines.append(f"| {item.test_id} | {item.bundle_id} | {'PASS' if item.passed else 'FAIL'} |")
-    lines += ["","## Evidence","","| Bundle | Test | Collector | Raw Artifact |","| --- | --- | --- | --- |"]
+    lines += [
+        "",
+        "## Evidence",
+        "",
+        "| Bundle | Test | Collector | Stdout | Stderr |",
+        "| --- | --- | --- | --- | --- |",
+    ]
     for bundle in result.evidence:
-        artifact=bundle.get("artifacts",[{}])[0]
-        lines.append(f"| {bundle['metadata']['bundleId']} | {bundle['testRef']} | {bundle['provenance']['collector']} | {artifact.get('uri','-')} |")
+        by_type = {
+            artifact.get("type"): artifact
+            for artifact in bundle.get("artifacts", [])
+        }
+        stdout = by_type.get("raw-collector-output", {})
+        stderr = by_type.get("raw-collector-stderr", {})
+        lines.append(
+            f"| {bundle['metadata']['bundleId']} | {bundle['testRef']} | "
+            f"{bundle['provenance']['collector']} | "
+            f"{stdout.get('uri', '-')} | {stderr.get('uri', '-')} |"
+        )
     return "\n".join(lines)+"\n"
