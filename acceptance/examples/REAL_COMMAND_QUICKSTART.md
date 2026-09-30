@@ -85,7 +85,7 @@ make lab-smoke \
 
 Outputs under `.artifacts/lab/` include:
 
-- per-test raw stdout with SHA-256 checksum
+- per-test raw stdout and stderr with SHA-256 checksums
 - EvidenceBundles with version/asset provenance
 - `commissioning-run.json`
 - `commissioning-report.md`
