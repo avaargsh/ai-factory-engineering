@@ -35,6 +35,7 @@ from .run_report import render_acceptance_run_markdown
 from .timeseries import TimeSeriesInputs, evaluate_time_series
 from .timeseries_csv import load_time_slices_csv
 from .recovery_cli import add_recovery_parser, run_recovery_cli
+from .replay import canonical_digest
 from .commissioning_manifest import (
     load_live_manifest,
     load_manifest_annotations,
@@ -333,17 +334,38 @@ def main() -> None:
         evidence_refs = {}
         for bundle in result.evidence:
             bundle_id = bundle["metadata"]["bundleId"]
+            evidence_refs[
+                f"{bundle_id}.bundle"
+            ] = canonical_digest(bundle)
+
             artifacts = bundle.get("artifacts", [])
             if not artifacts:
                 raise SystemExit(
-                    f"missing raw artifact for evidence bundle: {bundle_id}"
+                    f"missing raw artifacts for evidence bundle: {bundle_id}"
                 )
-            checksum = artifacts[0].get("checksum")
-            if not isinstance(checksum, str) or not checksum.startswith("sha256:"):
-                raise SystemExit(
-                    f"missing raw artifact checksum for evidence bundle: {bundle_id}"
+            seen_types = {}
+            for artifact in artifacts:
+                artifact_type = artifact.get("type")
+                checksum = artifact.get("checksum")
+                if (
+                    not isinstance(artifact_type, str)
+                    or not artifact_type
+                    or not isinstance(checksum, str)
+                    or not checksum.startswith("sha256:")
+                ):
+                    raise SystemExit(
+                        f"invalid raw artifact metadata for evidence bundle: {bundle_id}"
+                    )
+                index = seen_types.get(artifact_type, 0)
+                seen_types[artifact_type] = index + 1
+                suffix = (
+                    artifact_type
+                    if index == 0
+                    else f"{artifact_type}.{index}"
                 )
-            evidence_refs[bundle_id] = checksum
+                evidence_refs[
+                    f"{bundle_id}.{suffix}"
+                ] = checksum
 
         acceptance_artifact = build_acceptance_artifact(
             decision,
