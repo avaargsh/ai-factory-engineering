@@ -61,3 +61,19 @@ Every pass/fail should link to:
 The deliverable is not "N GPUs installed."
 
 The deliverable is an independently reproducible statement of **Usable / Productive AI Capacity**.
+
+
+## Frozen replay boundary
+
+A commissioning replay and a commissioning rerun are different operations.
+
+**Replay** consumes a previously sealed `AcceptanceArtifact`. The artifact is
+validated for semantic consistency and content digest integrity, then the
+cross-layer decision is reconstructed only from those frozen fields. Replay does
+not query GPUs, fabric, Kubernetes, inference endpoints, or collector commands.
+
+**Rerun** executes collectors again against current infrastructure and must
+produce a new evidence set and a new AcceptanceArtifact.
+
+This distinction prevents a historical acceptance decision from silently
+changing because live infrastructure changed after the original test window.
