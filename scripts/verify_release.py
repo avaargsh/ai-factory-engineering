@@ -30,6 +30,11 @@ def main() -> int:
 
     run(sys.executable, "-m", "pytest", "-q")
     run(sys.executable, "examples/576_gpu_commissioning_demo.py")
+    run(
+        sys.executable,
+        "scripts/generate_failure_fixture.py",
+        str(ARTIFACTS / "failure-fixture"),
+    )
 
     summary = {
         "project": project["name"],
@@ -37,6 +42,10 @@ def main() -> int:
         "license": project["license"],
         "tests": "passed",
         "demo": "passed",
+        "failureFixture": "passed",
+        "failureFixturePath": str(
+            ARTIFACTS / "failure-fixture" / "acceptance-artifact.json"
+        ),
         "gitHistoryScan": "separate make audit-history gate",
     }
     (ARTIFACTS / "verification.json").write_text(
