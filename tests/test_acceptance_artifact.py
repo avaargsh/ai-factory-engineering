@@ -3,6 +3,7 @@ import pytest
 from ai_factory_engineering.replay import canonical_digest
 from ai_factory_engineering.acceptance_artifact import (
     build_acceptance_artifact,
+    replay_acceptance_artifact,
     verify_acceptance_artifact,
 )
 from ai_factory_engineering.commissioning import GateDecision, GateStatus
@@ -171,3 +172,77 @@ def test_resealed_empty_evidence_refs_remain_invalid():
     _reseal(artifact)
 
     assert verify_acceptance_artifact(artifact) is False
+
+def test_frozen_artifact_replay_reproduces_acceptance_without_live_evidence():
+    original = decision()
+    artifact = build_acceptance_artifact(
+        original,
+        case_id="golden-factory-576-runtime",
+        evidence_refs={
+            "runtime": "evidence://runtime/slo-001",
+            "fabric": "evidence://fabric/nccl-001",
+            "gpu": "evidence://gpu/dcgm-001",
+        },
+        issued_at="2026-09-30T10:00:00+00:00",
+    )
+
+    replayed = replay_acceptance_artifact(artifact)
+
+    assert replayed == original
+
+
+def test_frozen_artifact_replay_preserves_reject_gate_reasons():
+    original = CrossLayerAcceptanceDecision(
+        disposition=AcceptanceDisposition.REJECT,
+        accepted=False,
+        gates=(
+            GateDecision(
+                "gpu",
+                GateStatus.FAIL,
+                ("dcgm diagnostic failed",),
+            ),
+            GateDecision(
+                "runtime",
+                GateStatus.BLOCKED,
+                ("gpu gate did not pass",),
+            ),
+        ),
+        reasons=(
+            "gpu: dcgm diagnostic failed",
+            "runtime: gpu gate did not pass",
+        ),
+    )
+    artifact = build_acceptance_artifact(
+        original,
+        case_id="controlled-lab-failure",
+        evidence_refs={
+            "gpu": "evidence://gpu/dcgm-failed",
+            "runtime": "evidence://runtime/blocked",
+        },
+        issued_at="2026-09-30T10:05:00+00:00",
+    )
+
+    replayed = replay_acceptance_artifact(artifact)
+
+    assert replayed == original
+    assert replayed.accepted is False
+    assert replayed.disposition == AcceptanceDisposition.REJECT
+
+
+def test_frozen_artifact_replay_rejects_resealed_semantic_tamper():
+    artifact = build_acceptance_artifact(
+        decision(),
+        case_id="golden-factory-576-runtime",
+        evidence_refs={"gpu": "evidence://gpu/dcgm-001"},
+        issued_at="2026-09-30T10:10:00+00:00",
+    )
+    artifact["gates"][0]["status"] = "FAIL"
+    artifact["gates"][0]["reasons"] = ["tampered"]
+    _reseal(artifact)
+
+    with pytest.raises(
+        ValueError,
+        match="cannot replay invalid acceptance artifact",
+    ):
+        replay_acceptance_artifact(artifact)
+

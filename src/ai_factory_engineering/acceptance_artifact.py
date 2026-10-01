@@ -4,7 +4,11 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Any, Mapping
 
-from .cross_layer_acceptance import CrossLayerAcceptanceDecision
+from .commissioning import GateDecision, GateStatus
+from .cross_layer_acceptance import (
+    AcceptanceDisposition,
+    CrossLayerAcceptanceDecision,
+)
 from .replay import canonical_digest
 
 
@@ -122,3 +126,38 @@ def verify_acceptance_artifact(artifact: Mapping[str, Any]) -> bool:
     digest = artifact.get("digest")
     payload = {key: value for key, value in artifact.items() if key != "digest"}
     return isinstance(digest, str) and digest == canonical_digest(payload)
+
+
+def replay_acceptance_artifact(
+    artifact: Mapping[str, Any],
+) -> CrossLayerAcceptanceDecision:
+    """Reconstruct the sealed acceptance decision without live evidence reads.
+
+    Replay is intentionally limited to a previously sealed AcceptanceArtifact.
+    It verifies both semantic consistency and the content digest before exposing
+    the decision. Callers that need to re-run collectors must do so as a new
+    commissioning run and produce a new artifact.
+    """
+    if not verify_acceptance_artifact(artifact):
+        raise ValueError(
+            "cannot replay invalid acceptance artifact"
+        )
+
+    return CrossLayerAcceptanceDecision(
+        disposition=AcceptanceDisposition(
+            str(artifact["disposition"])
+        ),
+        accepted=bool(artifact["accepted"]),
+        gates=tuple(
+            GateDecision(
+                str(gate["gateId"]),
+                GateStatus(str(gate["status"])),
+                tuple(str(reason) for reason in gate["reasons"]),
+            )
+            for gate in artifact["gates"]
+        ),
+        reasons=tuple(
+            str(reason)
+            for reason in artifact["reasons"]
+        ),
+    )
