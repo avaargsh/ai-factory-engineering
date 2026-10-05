@@ -1,0 +1,43 @@
+name: real-gpu-controlled-lab
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_path:
+        description: Absolute or repository-relative site-owned controlled-lab manifest path on the GPU runner
+        required: true
+      artifact_name:
+        description: GitHub artifact name
+        required: false
+        default: real-gpu-controlled-lab
+
+permissions:
+  contents: read
+
+jobs:
+  controlled-lab:
+    environment: controlled-lab
+    runs-on: [self-hosted, gpu-controlled-lab]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install exact source under test
+        run: python -m pip install -e ".[dev]"
+      - name: Execute real GPU controlled-lab
+        env:
+          MANIFEST: ${{ inputs.manifest_path }}
+          ATTESTATION_KEY_ID: ${{ vars.AI_FACTORY_ATTESTATION_KEY_ID }}
+          AI_FACTORY_ATTESTATION_SECRET: ${{ secrets.AI_FACTORY_ATTESTATION_SECRET }}
+          LAB_ARTIFACTS: .artifacts/real-gpu-${{ github.run_id }}
+        run: bash scripts/run_real_gpu_controlled_lab.sh
+      - name: Upload immutable lab evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}-${{ github.run_id }}
+          path: .artifacts/real-gpu-${{ github.run_id }}/
+          if-no-files-found: error
+          retention-days: 30
