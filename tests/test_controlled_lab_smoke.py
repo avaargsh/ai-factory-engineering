@@ -88,6 +88,7 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
         json.dumps(
             {
                 "runId": "lab-001",
+                "evidenceMode": "synthetic-test",
                 "topologyRef": "lab://node-01",
                 "versionMatrix": {
                     "gpu": "test-gpu",
@@ -207,6 +208,7 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
         )
     )
     assert run["status"] == "PASS"
+    assert run["annotations"]["evidenceMode"] == "synthetic-test"
     assert run["acceptanceArtifactDigest"] == artifact["digest"]
     assert run["annotations"]["notEvaluated"][0]["layer"] == "fabric"
     assert run["evidence"][0]["environment"]["versionMatrix"][
