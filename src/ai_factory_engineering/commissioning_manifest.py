@@ -102,6 +102,9 @@ def load_manifest_annotations(
     if not isinstance(not_evaluated, list):
         raise ValueError("notEvaluated must be an array")
     return {
+        "evidenceMode": str(
+            doc.get("evidenceMode", "unspecified")
+        ),
         "notEvaluated": not_evaluated,
         "versionMatrix": dict(
             doc.get("versionMatrix", {})

@@ -1,5 +1,6 @@
 {
   "runId": "CHANGE-ME-controlled-lab-001",
+  "evidenceMode": "real-hardware",
   "topologyRef": "CHANGE-ME://lab/cell-or-node",
   "versionMatrix": {
     "gpu": "CHANGE-ME",
@@ -24,14 +25,20 @@
     {
       "id": "compute",
       "layer": "compute",
-      "tests": ["gpu-health"],
+      "tests": [
+        "gpu-health"
+      ],
       "failClosed": true
     },
     {
       "id": "runtime",
       "layer": "runtime",
-      "tests": ["inference-slo"],
-      "dependsOn": ["compute"],
+      "tests": [
+        "inference-slo"
+      ],
+      "dependsOn": [
+        "compute"
+      ],
       "failClosed": true
     }
   ],
