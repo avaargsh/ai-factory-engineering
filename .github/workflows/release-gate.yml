@@ -1,20 +1,8 @@
 name: release-gate
 
+# 完整发布验证包含 demo、release contract 与全历史审计；普通 PR 由 test.yml 覆盖。
+# 仅在准备发布/冻结证据时显式运行，避免每次代码提交重复消耗 Actions 分钟数。
 on:
-  push:
-    branches: [main]
-  pull_request:
-    paths:
-      - ".github/workflows/release-gate.yml"
-      - "Makefile"
-      - "pyproject.toml"
-      - "scripts/**"
-      - "src/**"
-      - "tests/**"
-      - "examples/**"
-      - "acceptance/**"
-      - "RELEASE_READINESS.md"
-      - "RELEASE_NOTES.md"
   workflow_dispatch:
 
 permissions:
