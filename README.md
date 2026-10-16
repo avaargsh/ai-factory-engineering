@@ -1,34 +1,35 @@
 # AI Factory Engineering
 
-Cross-layer commissioning and acceptance for AI infrastructure: prove that **Compute -> Fabric -> Runtime** can sustain declared workload SLOs, then seal the result as replayable evidence.
+## 项目简介（About）
 
-The project focuses on the engineering gap between "the hardware is installed" and "the AI factory is actually delivering useful, measurable output."
+面向 AI 基础设施的跨层调试与验收工具包。证明 **计算 -> 网络 -> 运行时 (Compute -> Fabric -> Runtime)** 能持续满足声明的工作负载 SLO，并将结果封存为可重播、可验证的证据。
 
-## Why this exists
+本项目聚焦“硬件已安装”与“AI 工厂实际交付可用、可衡量输出”之间的工程差距，把分散的层面检查串成一条可审计、可重播的跨层验收链路。
 
-A modern GPU cluster can look healthy at one layer and still fail as a system:
+### 核心定位
 
-- GPUs pass basic health checks while NVLink/NVSwitch underperform.
-- RDMA links are up while retry/symbol errors destroy collective performance.
-- NCCL bandwidth is acceptable while inference TTFT/TPOT misses the workload SLO.
-- Individual checks pass, but there is no signed cross-layer acceptance artifact tying evidence to a decision.
+- **受理单元是整个交付系统/工作负载路径**，而非单台设备。
+- **证据优先**：在推导验收前，先保留原始采集工件与来源。
+- **先失败，后通过 (Fail closed)**：证据缺失或不完整时不得静默变为 PASS。
+- **阈值显式**：站点拓扑与合同 SLO 定义验收底线，框架不硬编码通用阈值。
+- **可重播决策**：验收制品内容寻址且可验证，支持离线回放。
 
-This repository turns those checks into one acceptance chain.
+## 英文文档 / English documentation
 
-## 中文文档 / Chinese documentation
+本 README 为中文版。英文版请见 [README.en.md](README.en.md)。
 
-中文版文档：
+## 为什么存在这个项目
 
-- [项目关于 (ABOUT)](ABOUT.zh-CN.md)
-- [项目总览 (README)](README.zh-CN.md)
-- [贡献指南](CONTRIBUTING.zh-CN.md)
-- [开发者工作流](DEVELOPMENT.zh-CN.md)
-- [安全说明](SECURITY.zh-CN.md)
-- [知识库索引](docs/zh-CN/README.md)
+现代 GPU 集群在单层看可能看起来健康，但作为系统仍可能失败：
 
-More Chinese documents under `docs/` will be added progressively.
+- GPU 通过基础健康检查，但 NVLink/NVSwitch 性能不足。
+- RDMA 链路已连通，但重试/符号错误破坏集体通信性能。
+- NCCL 带宽达标，但推理 TTFT/TPOT 未达到工作负载 SLO。
+- 各项检查均通过，但缺少将证据与决策绑定的签名跨层验收制品。
 
-## Golden path
+本仓库将这些检查串成一条验收链路。
+
+## 黄金路径
 
 ```text
 Native collector commands
@@ -47,6 +48,8 @@ Native collector commands
 
 Reference evidence adapters currently cover:
 
+当前参考证据适配器涵盖：
+
 - DCGM GPU health
 - NVLink health/bandwidth
 - RDMA port/error health
@@ -55,7 +58,9 @@ Reference evidence adapters currently cover:
 
 Thresholds are declared inputs. The framework does not hard-code a universal "good" NCCL bandwidth or latency target.
 
-## Five-minute demo
+阈值为声明输入。框架不硬编码通用的“良好”NCCL 带宽或延迟目标。
+
+## 五分钟演示
 
 Requirements: Python 3.11+.
 
@@ -65,32 +70,32 @@ make test
 make demo
 ```
 
-The deterministic demo requires no GPU hardware and writes:
+确定性演示无需 GPU 硬件，输出写入：
 
 ```text
 .artifacts/demo/acceptance.json
 ```
 
-It demonstrates the complete acceptance contract using repository fixtures.
+它使用仓库固件 (fixtures) 演示完整的验收契约。
 
-## Real-command smoke path
+## 真实命令烟雾测试路径
 
-Copy the commissioning template and replace every site-specific placeholder:
+拷贝委托模板并替换每个站点占位符：
 
 ```bash
 cp acceptance/examples/real-command-commissioning.template.json \
    acceptance/examples/my-site-commissioning.json
 ```
 
-Then run:
+然后运行：
 
 ```bash
 make smoke MANIFEST=acceptance/examples/my-site-commissioning.json
 ```
 
-The manifest can invoke approved site commands such as `dcgmi`, `nvidia-smi nvlink`, RDMA tooling and `nccl-tests`. Raw command output is retained as evidence.
+该清单可调用批准的站点命令，如 `dcgmi`、`nvidia-smi nvlink`、RDMA 工具和 `nccl-tests`。原始命令输出会被保留为证据。
 
-## Architecture
+## 架构
 
 ```text
                     AI Factory Acceptance Plane
@@ -103,29 +108,29 @@ The manifest can invoke approved site commands such as `dcgmi`, `nvidia-smi nvli
       │                         │                          │
       └──────────────┬──────────┴──────────────┬──────────┘
                      ▼                         ▼
-               EvidenceBundle            Gate DAG
-                     │                         │
-                     └──────────────┬──────────┘
-                                    ▼
-                           AcceptanceDecision
-                                    ▼
-                           AcceptanceArtifact
-                                    ▼
-                               Attestation
-                                    ▼
-                         Verification / Replay
+                EvidenceBundle            Gate DAG
+                      │                         │
+                      └──────────────┬──────────┘
+                                     ▼
+                            AcceptanceDecision
+                                     ▼
+                            AcceptanceArtifact
+                                     ▼
+                                Attestation
+                                     ▼
+                          Verification / Replay
 ```
 
-## Design principles
+## 设计原则
 
-- **Fail closed.** Missing or incomplete evidence must not silently become PASS.
-- **Evidence first.** Preserve raw artifacts and provenance before deriving acceptance.
-- **Cross-layer, not device-only.** The acceptance unit is the delivered system/workload path.
-- **Thresholds are explicit.** Site topology and contractual SLOs define acceptance floors.
-- **Portable runner boundary.** Native commands stay outside domain logic.
-- **Replayable decision.** Acceptance artifacts are content-addressed and verifiable.
+- **先失败，后通过 (Fail closed).** 证据缺失或不完整时不得静默变为 PASS。
+- **证据优先 (Evidence first).** 在推导验收前先保留原始工件与来源。
+- **跨层，而非仅设备 (Cross-layer, not device-only).** 验收单元是交付的系统/工作负载路径。
+- **阈值显式 (Thresholds are explicit).** 站点拓扑和合同 SLO 定义验收底线。
+- **可移植运行器边界 (Portable runner boundary).** 原生命令保持在域逻辑之外。
+- **可重播决策 (Replayable decision).** 验收制品内容寻址且可验证。
 
-## Repository map
+## 仓库地图
 
 ```text
 src/ai_factory_engineering/   acceptance, collectors, runner, reports, replay
@@ -137,14 +142,11 @@ casebook/                     reference engineering cases
 docs/                         architecture and AI Factory engineering notes
 ```
 
-## External acceptance contract
+## 外部验收契约
 
-`AcceptanceArtifact` is the portable output boundary for consumers outside this
-repository. Its JSON contract is published at
-`schemas/acceptance-artifact.schema.json`.
+`AcceptanceArtifact` 是面向仓库外消费者的可移植输出边界。其 JSON 契约发布于 `schemas/acceptance-artifact.schema.json`。
 
-External control planes should consume the sealed artifact rather than re-run
-AI Factory threshold logic:
+外部控制平面应消费封存的制品，而非重新运行 AI Factory 阈值逻辑：
 
 ```text
 raw evidence
@@ -158,17 +160,13 @@ raw evidence
   -> external evidence binding
 ```
 
-Schema validation establishes the artifact shape; the artifact digest establishes
-content integrity. Production trust/authenticity remains a separate attestation
-concern and is not implied by digest verification alone.
+Schema 验证确立制品形状；制品摘要确立内容完整性。生产信任/真实性是单独的证明关注点，不由摘要验证单独隐含。
 
-## Acceptance attestation trust boundary
+## 验收证明信任边界
 
-`AcceptanceArtifact.digest` proves content integrity, not producer identity.
-A separate `AcceptanceAttestation` binds the artifact digest to a key identity.
+`AcceptanceArtifact.digest` 证明内容完整性，不证明生产者身份。单独的 `AcceptanceAttestation` 将制品摘要绑定到密钥身份。
 
-The reference implementation currently uses HMAC-SHA256 for controlled
-integration/lab proofs. The signed message includes:
+参考实现目前对受控集成/实验室证明使用 HMAC-SHA256。签名消息包括：
 
 ```text
 apiVersion
@@ -178,20 +176,15 @@ keyId
 algorithm
 ```
 
-so rewriting `keyId` or `algorithm` invalidates the signature.
+因此重写 `keyId` 或 `algorithm` 会使签名失效。
 
-The external contract is published at
-`schemas/acceptance-attestation.schema.json`.
+外部契约发布于 `schemas/acceptance-attestation.schema.json`。
 
-HMAC remains a reference mechanism. Production deployments should replace the
-signer/verifier with an asymmetric KMS/Sigstore/Cosign-backed implementation
-without changing the AcceptanceArtifact boundary.
+HMAC 为参考机制。生产部署应将签名者/验证者替换为非对称 KMS/Sigstore/Cosign 后端实现，且不改变 AcceptanceArtifact 边界。
 
-## Seal a controlled-lab acceptance result
+## 封存受控实验室验收结果
 
-After a real commissioning run has produced an `AcceptanceArtifact`, the
-reference attestation can be created without putting the shared secret on the
-command line:
+在真实委托运行产生 `AcceptanceArtifact` 后，可不在命令行上暴露共享密钥的前提下创建参考证明：
 
 ```bash
 export AI_FACTORY_ATTESTATION_SECRET='...'
@@ -206,25 +199,22 @@ ai-factory verify-attestation \
   --expected-key-id commissioning-lab
 ```
 
-The CLI reads the secret only from the named environment variable and never
-writes it into the artifact or attestation. The emitted attestation contains only
-the artifact digest, key identity, algorithm and signature.
+CLI 仅从指定环境变量读取密钥，且永不将其写入制品或证明。输出的证明仅包含制品摘要、密钥身份、算法和签名。
 
-This remains the HMAC reference path for controlled integration. Production
-signing should use an asymmetric KMS/Sigstore/Cosign-backed verifier.
+这仍是受控集成的 HMAC 参考路径。生产签名应使用非对称 KMS/Sigstore/Cosign 验证器。
 
-## Controlled-lab handoff
+## 受控实验室交接
 
-The smallest real-hardware path is now intentionally narrow:
+最小真实硬件路径已有意收窄：
 
 ```text
 GPU telemetry -> Compute Gate
 Inference JSON summary -> Runtime Gate
-             -> AcceptanceArtifact
-             -> AcceptanceAttestation
+              -> AcceptanceArtifact
+              -> AcceptanceAttestation
 ```
 
-Use:
+使用：
 
 ```bash
 ai-factory validate-lab-manifest /path/to/lab.json
@@ -235,47 +225,42 @@ make lab-smoke \
   ATTESTATION_KEY_ID=commissioning-lab
 ```
 
-The template at
-`acceptance/examples/controlled-lab-minimum.template.json` is fail-closed until
-site identity, versions, assets, commands and SLO baselines are explicitly
-filled. Fabric is reported as Not Evaluated in that minimum path rather than
-silently passing.
+模板 `acceptance/examples/controlled-lab-minimum.template.json` 在站点身份、版本、资产、命令和 SLO 基线被明确填写前为 fail-closed。最小路径中 Fabric 报告为 Not Evaluated，而非静默通过。
 
-`commission` now emits a content-addressed `acceptance-artifact.json` whose
-evidence references bind the canonical EvidenceBundle plus SHA-256 checksums of raw collector stdout and stderr.
+`commission` 现在会发出内容寻址的 `acceptance-artifact.json`，其证据引用绑定标准 EvidenceBundle 加上原始采集器 stdout/stderr 的 SHA-256 校验和。
 
-## Current status
+## 当前状态
 
-v0.1 release candidate.
+v0.1 发布候选版。
 
-Implemented:
+已实现：
 
-- native collector execution boundary
-- EvidenceBundle schema/validation
-- DCGM/NVLink/RDMA/NCCL/inference adapters
-- fail-closed cross-layer Gate DAG
-- deterministic 576-GPU reference acceptance demo
-- AcceptanceArtifact digest + reference attestation
-- real-command commissioning manifest template
-- `make demo` / `make smoke` developer workflow
+- 原生采集器执行边界
+- EvidenceBundle 架构/验证
+- DCGM/NVLink/RDMA/NCCL/推理适配器
+- fail-closed 跨层 Gate DAG
+- 确定性 576-GPU 参考验收演示
+- AcceptanceArtifact 摘要 + 参考证明
+- 真实命令委托清单模板
+- `make demo` / `make smoke` 开发者工作流
 
-Not yet claimed:
+尚未声明：
 
-- a live 576-GPU production commissioning run
-- universal performance thresholds
-- production KMS/Sigstore/Cosign signing
-- hardware-specific parser coverage for every vendor/version
-- replacement for vendor diagnostics or site commissioning procedures
+- 真实 576-GPU 生产委托运行
+- 通用性能阈值
+- 生产 KMS/Sigstore/Cosign 签名
+- 覆盖每个供应商/版本的硬件特定解析器
+- 替代供应商诊断或站点委托流程
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) and [RELEASE_READINESS.md](RELEASE_READINESS.md).
+参见 [DEVELOPMENT.zh-CN.md](DEVELOPMENT.zh-CN.md) 和 [RELEASE_READINESS.md](RELEASE_READINESS.md)。
 
-## Scope
+## 范围
 
-The broader engineering model remains:
+更广泛的工程模型保持：
 
 ```text
 MW -> Facility -> Rack/Pod -> GPU -> Fabric -> Cluster
    -> Runtime -> Model -> Token / Model Progress -> SLO / Economics
 ```
 
-This repository currently concentrates executable code around the cross-layer commissioning and acceptance portion of that chain.
+本仓库当前将可执行代码集中在跨层委托和验收部分。

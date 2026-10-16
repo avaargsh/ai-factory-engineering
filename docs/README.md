@@ -72,7 +72,7 @@ The chapter numbers are logical organization, not a commitment to publish all ma
 
 Core documents also available in Simplified Chinese:
 
-- [Project overview (README)](../../README.zh-CN.md)
+- [Project overview (README)](../../README.md)
 - [Contributing](../../CONTRIBUTING.zh-CN.md)
 - [Developer workflow](../../DEVELOPMENT.zh-CN.md)
 - [Security](../../SECURITY.zh-CN.md)

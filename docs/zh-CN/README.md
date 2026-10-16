@@ -72,7 +72,7 @@
 
 以下为本仓库已提供中文版的核心文档：
 
-- [项目总览（README）](../../README.zh-CN.md)
+- [项目总览（README）](../../README.md)
 - [贡献指南](../../CONTRIBUTING.zh-CN.md)
 - [开发者工作流](../../DEVELOPMENT.zh-CN.md)
 - [安全说明](../../SECURITY.zh-CN.md)
