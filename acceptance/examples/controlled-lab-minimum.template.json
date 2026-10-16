@@ -1,8 +1,8 @@
 {
-  "runId": "CHANGE-ME-controlled-lab-001",
-  "evidenceMode": "real-hardware",
-  "topologyRef": "CHANGE-ME://lab/cell-or-node",
-  "versionMatrix": {
+  "run_id": "CHANGE-ME-controlled-lab-001",
+  "evidence_mode": "real-hardware",
+  "topology_ref": "CHANGE-ME://lab/cell-or-node",
+  "version_matrix": {
     "gpu": "CHANGE-ME",
     "driver": "CHANGE-ME",
     "cuda": "CHANGE-ME",
@@ -10,12 +10,12 @@
     "model": "CHANGE-ME",
     "benchmark": "CHANGE-ME"
   },
-  "assetRefs": [
+  "asset_refs": [
     "CHANGE-ME://asset/gpu-node"
   ],
-  "collectorVersion": "0.1",
-  "timeoutSeconds": 300,
-  "notEvaluated": [
+  "collector_version": "0.1",
+  "timeout_seconds": 300,
+  "not_evaluated": [
     {
       "layer": "fabric",
       "reason": "Minimum controlled-lab template: add live RDMA/NCCL tests when the lab supports multi-node fabric validation."
@@ -28,7 +28,7 @@
       "tests": [
         "gpu-health"
       ],
-      "failClosed": true
+      "fail_closed": true
     },
     {
       "id": "runtime",
@@ -36,10 +36,10 @@
       "tests": [
         "inference-slo"
       ],
-      "dependsOn": [
+      "depends_on": [
         "compute"
       ],
-      "failClosed": true
+      "fail_closed": true
     }
   ],
   "tests": [
@@ -52,8 +52,8 @@
       ],
       "test": "../tests/gpu-health.json",
       "baselines": [],
-      "gateId": "compute",
-      "bundleId": "gpu-health-live"
+      "gate_id": "compute",
+      "bundle_id": "gpu-health-live"
     },
     {
       "collector": "inference",
@@ -67,8 +67,8 @@
         "controlled-lab-baselines/tpot-p95.template.json",
         "controlled-lab-baselines/success-ratio.template.json"
       ],
-      "gateId": "runtime",
-      "bundleId": "inference-slo-live"
+      "gate_id": "runtime",
+      "bundle_id": "inference-slo-live"
     }
   ]
 }

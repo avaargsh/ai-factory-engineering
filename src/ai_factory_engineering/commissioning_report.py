@@ -15,8 +15,8 @@ def commissioning_run_document(
     acceptance_artifact_digest: str | None = None,
 ) -> dict[str, Any]:
     document = {
-        "runId": run_id,
-        "topologyRef": topology_ref,
+        "run_id": run_id,
+        "topology_ref": topology_ref,
         "status": "PASS" if all(g.status.value == "PASS" for g in result.gates) else "FAIL",
         "gates": [asdict(g) for g in result.gates],
         "tests": [asdict(a) for a in result.acceptance],
@@ -25,7 +25,7 @@ def commissioning_run_document(
     if annotations:
         document["annotations"] = annotations
     if acceptance_artifact_digest:
-        document["acceptanceArtifactDigest"] = acceptance_artifact_digest
+        document["acceptance_artifact_digest"] = acceptance_artifact_digest
     return document
 
 
@@ -45,7 +45,7 @@ def render_commissioning_markdown(
     lines=[f"# Commissioning Run — {run_id}","",f"**Topology:** {topology_ref}",f"**Result:** {doc['status']}","","## Gates","","| Gate | Result | Reason |","| --- | :---: | --- |"]
     for gate in result.gates:
         lines.append(f"| {gate.gate_id} | {gate.status.value} | {'; '.join(gate.reasons) or '-'} |")
-    not_evaluated = (annotations or {}).get("notEvaluated", [])
+    not_evaluated = (annotations or {}).get("not_evaluated", [])
     if not_evaluated:
         lines += [
             "",

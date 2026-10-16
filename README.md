@@ -15,6 +15,18 @@ A modern GPU cluster can look healthy at one layer and still fail as a system:
 
 This repository turns those checks into one acceptance chain.
 
+## 中文文档 / Chinese documentation
+
+中文版文档：
+
+- [项目总览 (README)](README.zh-CN.md)
+- [贡献指南](CONTRIBUTING.zh-CN.md)
+- [开发者工作流](DEVELOPMENT.zh-CN.md)
+- [安全说明](SECURITY.zh-CN.md)
+- [知识库索引](docs/zh-CN/README.md)
+
+More Chinese documents under `docs/` will be added progressively.
+
 ## Golden path
 
 ```text

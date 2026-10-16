@@ -1,6 +1,6 @@
 {
-  "runId": "demo-fabric-001",
-  "topologyRef": "golden-factory-576",
+  "run_id": "demo-fabric-001",
+  "topology_ref": "golden-factory-576",
   "gates": [
     {
       "id": "fabric-gate",
@@ -22,8 +22,8 @@
         "../../tests/fixtures/baselines/rdma-tx.json",
         "../../tests/fixtures/baselines/rdma-rx.json"
       ],
-      "gateId": "fabric-gate",
-      "bundleId": "rdma-demo"
+      "gate_id": "fabric-gate",
+      "bundle_id": "rdma-demo"
     },
     {
       "collector": "nccl",
@@ -35,8 +35,8 @@
         "../../tests/fixtures/baselines/nccl.json",
         "../../tests/fixtures/baselines/nccl-correctness.json"
       ],
-      "gateId": "fabric-gate",
-      "bundleId": "nccl-demo"
+      "gate_id": "fabric-gate",
+      "bundle_id": "nccl-demo"
     }
   ]
 }

@@ -87,18 +87,18 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
     manifest.write_text(
         json.dumps(
             {
-                "runId": "lab-001",
-                "evidenceMode": "synthetic-test",
-                "topologyRef": "lab://node-01",
-                "versionMatrix": {
+                "run_id": "lab-001",
+                "evidence_mode": "synthetic-test",
+                "topology_ref": "lab://node-01",
+                "version_matrix": {
                     "gpu": "test-gpu",
                     "driver": "test-driver",
                     "runtime": "test-runtime",
                     "model": "test-model",
                     "benchmark": "test-benchmark",
                 },
-                "assetRefs": ["asset://gpu-node-01"],
-                "notEvaluated": [
+                "asset_refs": ["asset://gpu-node-01"],
+                "not_evaluated": [
                     {
                         "layer": "fabric",
                         "reason": "single-node lab",
@@ -109,14 +109,14 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
                         "id": "compute",
                         "layer": "compute",
                         "tests": ["gpu-health"],
-                        "failClosed": True,
+                        "fail_closed": True,
                     },
                     {
                         "id": "runtime",
                         "layer": "runtime",
                         "tests": ["inference-slo"],
-                        "dependsOn": ["compute"],
-                        "failClosed": True,
+                        "depends_on": ["compute"],
+                        "fail_closed": True,
                     },
                 ],
                 "tests": [
@@ -133,8 +133,8 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
                         ],
                         "test": str(gpu_test),
                         "baselines": [],
-                        "gateId": "compute",
-                        "bundleId": "gpu-live",
+                        "gate_id": "compute",
+                        "bundle_id": "gpu-live",
                     },
                     {
                         "collector": "inference",
@@ -153,8 +153,8 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
                             str(tpot),
                             str(success),
                         ],
-                        "gateId": "runtime",
-                        "bundleId": "inference-live",
+                        "gate_id": "runtime",
+                        "bundle_id": "inference-live",
                     },
                 ],
             }
@@ -208,9 +208,9 @@ def test_controlled_lab_commission_emits_acceptance_artifact(
         )
     )
     assert run["status"] == "PASS"
-    assert run["annotations"]["evidenceMode"] == "synthetic-test"
-    assert run["acceptanceArtifactDigest"] == artifact["digest"]
-    assert run["annotations"]["notEvaluated"][0]["layer"] == "fabric"
+    assert run["annotations"]["evidence_mode"] == "synthetic-test"
+    assert run["acceptance_artifact_digest"] == artifact["digest"]
+    assert run["annotations"]["not_evaluated"][0]["layer"] == "fabric"
     assert run["evidence"][0]["environment"]["versionMatrix"][
         "driver"
     ] == "test-driver"

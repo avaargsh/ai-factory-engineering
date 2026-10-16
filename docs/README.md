@@ -67,3 +67,15 @@ Energy / MW
 30. Research Backlog / Evidence Queue
 
 The chapter numbers are logical organization, not a commitment to publish all material at once.
+
+## 中文文档 / Chinese documentation
+
+Core documents also available in Simplified Chinese:
+
+- [Project overview (README)](../../README.zh-CN.md)
+- [Contributing](../../CONTRIBUTING.zh-CN.md)
+- [Developer workflow](../../DEVELOPMENT.zh-CN.md)
+- [Security](../../SECURITY.zh-CN.md)
+- [Knowledge base index (Chinese)](zh-CN/README.md)
+
+More Chinese documents under `docs/` will be added progressively.

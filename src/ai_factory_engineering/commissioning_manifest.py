@@ -19,25 +19,25 @@ def load_live_manifest(path: str | Path):
             g["id"],
             g["layer"],
             tuple(g["tests"]),
-            tuple(g.get("dependsOn", ())),
-            g.get("failClosed", True),
+            tuple(g.get("depends_on", ())),
+            g.get("fail_closed", True),
         )
         for g in doc["gates"]
     )
 
     global_version_matrix = {
         str(key): str(value)
-        for key, value in doc.get("versionMatrix", {}).items()
+        for key, value in doc.get("version_matrix", {}).items()
     }
     global_asset_refs = tuple(
         str(value)
-        for value in doc.get("assetRefs", ())
+        for value in doc.get("asset_refs", ())
     )
     global_collector_version = str(
-        doc.get("collectorVersion", "0.1")
+        doc.get("collector_version", "0.1")
     )
     global_timeout = float(
-        doc.get("timeoutSeconds", 60.0)
+        doc.get("timeout_seconds", 60.0)
     )
 
     tests = []
@@ -46,12 +46,12 @@ def load_live_manifest(path: str | Path):
             **global_version_matrix,
             **{
                 str(key): str(value)
-                for key, value in item.get("versionMatrix", {}).items()
+                for key, value in item.get("version_matrix", {}).items()
             },
         }
         asset_refs = (
             global_asset_refs
-            + tuple(str(value) for value in item.get("assetRefs", ()))
+            + tuple(str(value) for value in item.get("asset_refs", ()))
         )
         tests.append(
             LiveTest(
@@ -64,11 +64,11 @@ def load_live_manifest(path: str | Path):
                     load_typed_baseline(base / baseline)
                     for baseline in item.get("baselines", ())
                 ),
-                gate_id=item["gateId"],
-                bundle_id=item["bundleId"],
+                gate_id=item["gate_id"],
+                bundle_id=item["bundle_id"],
                 collector_version=str(
                     item.get(
-                        "collectorVersion",
+                        "collector_version",
                         global_collector_version,
                     )
                 ),
@@ -76,7 +76,7 @@ def load_live_manifest(path: str | Path):
                 version_matrix=version_matrix,
                 timeout_seconds=float(
                     item.get(
-                        "timeoutSeconds",
+                        "timeout_seconds",
                         global_timeout,
                     )
                 ),
@@ -84,8 +84,8 @@ def load_live_manifest(path: str | Path):
         )
 
     return (
-        doc["runId"],
-        doc["topologyRef"],
+        doc["run_id"],
+        doc["topology_ref"],
         gates,
         tuple(tests),
     )
@@ -98,19 +98,19 @@ def load_manifest_annotations(
     doc = json.loads(
         Path(path).read_text(encoding="utf-8")
     )
-    not_evaluated = doc.get("notEvaluated", [])
+    not_evaluated = doc.get("not_evaluated", [])
     if not isinstance(not_evaluated, list):
-        raise ValueError("notEvaluated must be an array")
+        raise ValueError("not_evaluated must be an array")
     return {
-        "evidenceMode": str(
-            doc.get("evidenceMode", "unspecified")
+        "evidence_mode": str(
+            doc.get("evidence_mode", "unspecified")
         ),
-        "notEvaluated": not_evaluated,
-        "versionMatrix": dict(
-            doc.get("versionMatrix", {})
+        "not_evaluated": not_evaluated,
+        "version_matrix": dict(
+            doc.get("version_matrix", {})
         ),
-        "assetRefs": list(
-            doc.get("assetRefs", [])
+        "asset_refs": list(
+            doc.get("asset_refs", [])
         ),
     }
 
@@ -143,15 +143,15 @@ def validate_controlled_lab_manifest(
             "controlled-lab manifest contains CHANGE-ME placeholders"
         )
 
-    version_matrix = doc.get("versionMatrix")
+    version_matrix = doc.get("version_matrix")
     if not isinstance(version_matrix, dict) or not version_matrix:
         raise ValueError(
-            "controlled-lab manifest requires versionMatrix"
+            "controlled-lab manifest requires version_matrix"
         )
-    asset_refs = doc.get("assetRefs")
+    asset_refs = doc.get("asset_refs")
     if not isinstance(asset_refs, list) or not asset_refs:
         raise ValueError(
-            "controlled-lab manifest requires assetRefs"
+            "controlled-lab manifest requires asset_refs"
         )
 
     gate_layers = {
