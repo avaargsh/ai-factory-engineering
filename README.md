@@ -19,6 +19,7 @@ This repository turns those checks into one acceptance chain.
 
 中文版文档：
 
+- [项目关于 (ABOUT)](ABOUT.zh-CN.md)
 - [项目总览 (README)](README.zh-CN.md)
 - [贡献指南](CONTRIBUTING.zh-CN.md)
 - [开发者工作流](DEVELOPMENT.zh-CN.md)
